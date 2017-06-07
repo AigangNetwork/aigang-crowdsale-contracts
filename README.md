@@ -1,3 +1,3 @@
 # aigang-contracts
 
-Aigang smart contracts
+Aigang Ethereum smart contracts
