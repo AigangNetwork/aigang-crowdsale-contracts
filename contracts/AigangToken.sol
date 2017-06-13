@@ -7,7 +7,7 @@ import "./zeppelin/token/StandardToken.sol";
 /**
  * @title AigangToken
  *
- * @dev Simple ERC20 Token example, with crowdsale token creation
+ * @dev Simple ERC20 Token, with pre-sale logic
  * @dev IMPORTANT NOTE: do not use or deploy this contract as-is. It needs some changes to be 
  * production ready.
  */
@@ -21,11 +21,11 @@ contract AigangToken is StandardToken {
   uint public preIcoTokensLeft = PRE_ICO_SUPPLY;
 
   address public constant multisigForEth = 0x0;
-  address public constant multisigForAgg = 0x0;
+  address public constant multisigForAig = 0x0;
 
   mapping (address => uint) earlyInvestorsEthersCount;
 
-  // 1 ether = 50 example tokens
+  // 1 ether = 50 AIG tokens
   uint public constant PRICE = 50;
 
   /**
@@ -41,7 +41,7 @@ contract AigangToken is StandardToken {
   */
   function AigangToken() {
     totalSupply = TOTAL_SUPPLY;
-    balances[multisigForAgg] = TOTAL_SUPPLY - PRE_ICO_SUPPLY;
+    balances[multisigForAig] = TOTAL_SUPPLY - PRE_ICO_SUPPLY;
 
     // Early investors investable amount in Ethers
     earlyInvestorsEthersCount[0x1] = 10;
