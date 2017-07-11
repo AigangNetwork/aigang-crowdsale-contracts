@@ -12,26 +12,10 @@ import "./MiniMeToken.sol";
  * production ready.
  */
 contract AIT is MiniMeToken {
-
-  string public constant name = "AigangToken";
-  string public constant symbol = "AIG";
-  uint public constant decimals = 8;
-  uint public constant TOTAL_SUPPLY = 10000;
-  uint public constant PRE_ICO_SUPPLY = 2000;
-  uint public preIcoTokensLeft = PRE_ICO_SUPPLY;
-
-  address public constant multisigForEth = 0x0;
-  address public constant multisigForAig = 0x0;
-
-  mapping (address => uint) earlyInvestorsEthersCount;
-
-  // 1 ether = 50 AIG tokens
-  uint public constant PRICE = 50;
-
   /**
     * @dev Constructor
   */
-  function AigangToken(address _tokenFactory)
+  function AIT(address _tokenFactory)
     MiniMeToken(
       _tokenFactory,
       0x0,                     // no parent token
