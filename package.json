@@ -1,0 +1,24 @@
+{
+  "name": "aigang-contracts",
+  "version": "1.0.0",
+  "description": "Contribution Sale Tokens",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "yarn truffle compile",
+    "deploy": "yarn truffle migrate",
+    "test": "yarn truffle test"
+  },
+  "repository": "git+https://github.com/AigangNetwork/aigang-contracts.git",
+  "author": "Klaus Hott Vidal <klahott@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AigangNetwork/aigang-contracts/issues"
+  },
+  "homepage": "https://github.com/AigangNetwork/aigang-contracts#readme",
+  "dependencies": {
+    "truffle": "^3.4.3"
+  }
+}
