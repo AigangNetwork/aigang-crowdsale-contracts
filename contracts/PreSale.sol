@@ -7,18 +7,20 @@ contract PreSale is Controlled, TokenController {
   using SafeMath for uint256;
 
   uint256 constant public exchangeRate = 1; // ETH-AIT exchange rate
+  uint256 constant public investor_bonus = 25;
+
+  MiniMeToken public ait;
+
   uint256 public totalSupplyCap;            // Total AIT supply to be generated
   uint256 public totalSold;                 // How much tokens have been sold
 
-  MiniMeToken public ait;
+  uint256 public minimum_investment;
 
   uint256 public startBlock;
   uint256 public endBlock;
 
   uint256 public initializedBlock;
   uint256 public finalizedBlock;
-
-  uint256 constant public minimum_investment = 15 ether;
 
   bool public paused;
   bool public transferable;
@@ -46,12 +48,12 @@ contract PreSale is Controlled, TokenController {
 
   function initialize(
       uint256 _totalSupplyCap,
-
+      uint256 _minimum_investment,
       uint256 _startBlock,
       uint256 _endBlock
   ) public onlyController {
     // Initialize only once
-    require(initializedBlock != 0);
+    require(initializedBlock == 0);
 
     assert(ait.totalSupply() == 0);
     assert(ait.controller() == address(this));
@@ -62,13 +64,17 @@ contract PreSale is Controlled, TokenController {
     startBlock = _startBlock;
     endBlock = _endBlock;
 
+    require(_totalSupplyCap > 0);
     totalSupplyCap = _totalSupplyCap;
+
+    minimum_investment = _minimum_investment;
+
     initializedBlock = getBlockNumber();
     Initialized(initializedBlock);
   }
 
   /// @notice If anybody sends Ether directly to this contract, consider he is
-  ///  getting MSPs.
+  /// getting AITs.
   function () public payable notPaused {
     proxyPayment(msg.sender);
   }
@@ -78,9 +84,9 @@ contract PreSale is Controlled, TokenController {
   //////////
 
   /// @notice This method will generally be called by the MSP token contract to
-  ///  acquire MSPs. Or directly from third parties that want to acquire MSPs in
+  ///  acquire AITs. Or directly from third parties that want to acquire AITs in
   ///  behalf of a token holder.
-  /// @param _th MSP holder where the MSPs will be minted.
+  /// @param _th AIT holder where the AITs will be minted.
   function proxyPayment(address _th) public payable notPaused initialized contributionOpen returns (bool) {
     require(_th != 0x0);
     doBuy(_th);
@@ -200,13 +206,12 @@ contract PreSale is Controlled, TokenController {
   }
 
   /// @notice Pauses the contribution if there is any issue
-  function pauseContribution() onlyController {
-    paused = true;
+  function pauseContribution(bool _paused) onlyController {
+    paused = _paused;
   }
 
-  /// @notice Resumes the contribution
-  function resumeContribution() onlyController {
-    paused = false;
+  function allowTransfers(bool _transferable) onlyController {
+    transferable = _transferable;
   }
 
   event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
