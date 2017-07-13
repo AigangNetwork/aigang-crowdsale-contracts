@@ -83,7 +83,7 @@ contract PreSale is Controlled, TokenController {
   // TokenController functions
   //////////
 
-  /// @notice This method will generally be called by the MSP token contract to
+  /// @notice This method will generally be called by the AIT token contract to
   ///  acquire AITs. Or directly from third parties that want to acquire AITs in
   ///  behalf of a token holder.
   /// @param _th AIT holder where the AITs will be minted.
