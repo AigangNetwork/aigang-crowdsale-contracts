@@ -7,7 +7,9 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "yarn truffle compile",
+    "deploy": "yarn truffle migrate",
+    "test": "yarn truffle test"
   },
   "repository": "git+https://github.com/AigangNetwork/aigang-contracts.git",
   "author": "Klaus Hott Vidal <klahott@gmail.com>",
