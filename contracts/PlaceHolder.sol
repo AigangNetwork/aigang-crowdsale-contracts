@@ -42,4 +42,12 @@ contract PlaceHolder is Controlled, TokenController {
   ) onlyController returns (bool) {
     return apt.generateTokens(_owner, _amount);
   }
+
+  /// @notice The owner of this contract can change the controller of the APT token
+  ///  Please, be sure that the owner is a trusted agent or 0x0 address.
+  /// @param _newController The address of the new controller
+
+  function changeController(address _newController) public onlyController {
+    apt.changeController(_newController);
+  }
 }
