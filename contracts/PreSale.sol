@@ -6,12 +6,13 @@ import "./MiniMeToken.sol";
 contract PreSale is Controlled, TokenController {
   using SafeMath for uint256;
 
-  uint256 constant public exchangeRate = 1; // ETH-AIT exchange rate
+  uint256 constant public exchangeRate = 1; // ETH-APT exchange rate
   uint256 constant public investor_bonus = 25;
 
-  MiniMeToken public ait;
+  MiniMeToken public apt;
+  address public place_holder;
 
-  uint256 public totalSupplyCap;            // Total AIT supply to be generated
+  uint256 public totalSupplyCap;            // Total APT supply to be generated
   uint256 public totalSold;                 // How much tokens have been sold
 
   uint256 public minimum_investment;
@@ -23,7 +24,6 @@ contract PreSale is Controlled, TokenController {
   uint256 public finalizedBlock;
 
   bool public paused;
-  bool public transferable;
 
   modifier initialized() {
     assert(initializedBlock != 0);
@@ -42,8 +42,11 @@ contract PreSale is Controlled, TokenController {
     _;
   }
 
-  function PreSale(address _ait) {
-    ait = MiniMeToken(_ait);
+  function PreSale(address _apt, address _place_holder) {
+    require(_apt != 0x0);
+    require(_place_holder != 0x0);
+    apt = MiniMeToken(_apt);
+    place_holder = _place_holder;
   }
 
   function initialize(
@@ -55,9 +58,9 @@ contract PreSale is Controlled, TokenController {
     // Initialize only once
     require(initializedBlock == 0);
 
-    assert(ait.totalSupply() == 0);
-    assert(ait.controller() == address(this));
-    assert(ait.decimals() == 18);  // Same amount of decimals as ETH
+    assert(apt.totalSupply() == 0);
+    assert(apt.controller() == address(this));
+    assert(apt.decimals() == 18);  // Same amount of decimals as ETH
 
     assert(_startBlock >= getBlockNumber());
     require(_startBlock < _endBlock);
@@ -74,7 +77,7 @@ contract PreSale is Controlled, TokenController {
   }
 
   /// @notice If anybody sends Ether directly to this contract, consider he is
-  /// getting AITs.
+  /// getting APTs.
   function () public payable notPaused {
     proxyPayment(msg.sender);
   }
@@ -83,10 +86,10 @@ contract PreSale is Controlled, TokenController {
   // TokenController functions
   //////////
 
-  /// @notice This method will generally be called by the MSP token contract to
-  ///  acquire AITs. Or directly from third parties that want to acquire AITs in
+  /// @notice This method will generally be called by the APT token contract to
+  ///  acquire APTs. Or directly from third parties that want to acquire APTs in
   ///  behalf of a token holder.
-  /// @param _th AIT holder where the AITs will be minted.
+  /// @param _th APT holder where the APTs will be minted.
   function proxyPayment(address _th) public payable notPaused initialized contributionOpen returns (bool) {
     require(_th != 0x0);
     doBuy(_th);
@@ -94,11 +97,11 @@ contract PreSale is Controlled, TokenController {
   }
 
   function onTransfer(address, address, uint256) public returns (bool) {
-    return transferable;
+    return false;
   }
 
   function onApprove(address, address, uint256) public returns (bool) {
-    return transferable;
+    return false;
   }
 
   function doBuy(address _th) internal {
@@ -106,7 +109,7 @@ contract PreSale is Controlled, TokenController {
 
     // Antispam mechanism
     address caller;
-    if (msg.sender == address(ait)) {
+    if (msg.sender == address(apt)) {
       caller = _th;
     } else {
       caller = msg.sender;
@@ -125,7 +128,7 @@ contract PreSale is Controlled, TokenController {
           toFund = leftForSale.div(exchangeRate);
         }
 
-        assert(ait.generateTokens(_th, tokensGenerated));
+        assert(apt.generateTokens(_th, tokensGenerated));
         totalSold = totalSold.add(tokensGenerated);
 
         NewSale(_th, toFund, tokensGenerated);
@@ -160,6 +163,8 @@ contract PreSale is Controlled, TokenController {
     require(finalizedBlock == 0);
     assert(getBlockNumber() >= startBlock);
     assert(msg.sender == controller || getBlockNumber() > endBlock || tokensForSale() == 0);
+
+    apt.changeController(place_holder);
 
     finalizedBlock = getBlockNumber();
 
@@ -208,10 +213,6 @@ contract PreSale is Controlled, TokenController {
   /// @notice Pauses the contribution if there is any issue
   function pauseContribution(bool _paused) onlyController {
     paused = _paused;
-  }
-
-  function allowTransfers(bool _transferable) onlyController {
-    transferable = _transferable;
   }
 
   event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
