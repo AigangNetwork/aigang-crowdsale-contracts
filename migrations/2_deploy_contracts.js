@@ -5,7 +5,7 @@ var SafeMath = artifacts.require("SafeMath");
 var PreSale = artifacts.require("PreSale");
 var PreSaleWallet = artifacts.require("PreSaleWallet");
 
-module.exports = async function(deployer, chain, accounts) {
+module.exports = function(deployer, chain, accounts) {
   deployer.deploy(SafeMath).then((i) => {
     return deployer.deploy(MiniMeTokenFactory)
   }).then(()=> {
