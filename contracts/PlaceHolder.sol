@@ -49,4 +49,30 @@ contract PlaceHolder is Controlled, TokenController {
   function changeAPTController(address _newController) public onlyController {
     apt.changeController(_newController);
   }
+
+  //////////
+  // Safety Methods
+  //////////
+
+  /// @notice This method can be used by the controller to extract mistakenly
+  ///  sent tokens to this contract.
+  /// @param _token The address of the token contract that you want to recover
+  ///  set to 0 in case you want to extract ether.
+  function claimTokens(address _token) public onlyController {
+    if (apt.controller() == address(this)) {
+      apt.claimTokens(_token);
+    }
+
+    if (_token == 0x0) {
+      controller.transfer(this.balance);
+      return;
+    }
+
+    ERC20 token = ERC20(_token);
+    uint256 balance = token.balanceOf(this);
+    token.transfer(controller, balance);
+    ClaimedTokens(_token, controller, balance);
+  }
+
+  event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
 }
