@@ -6,12 +6,21 @@ var PreSale = artifacts.require("PreSale");
 var PreSaleWallet = artifacts.require("PreSaleWallet");
 
 module.exports = async function(deployer, chain, accounts) {
-  await deployer.deploy(SafeMath);
-  await deployer.deploy(MiniMeTokenFactory);
-  await deployer.deploy(APT, MiniMeTokenFactory.address);
-  await deployer.deploy(PlaceHolder, APT.address);
-  deployer.link(SafeMath, PreSale);
-  await deployer.deploy(PreSale, APT.address, PlaceHolder.address);
-  (await APT.deployed()).changeController(PreSale.address);
-  await deployer.deploy(PreSaleWallet, accounts[0], PreSale.address);
+  deployer.deploy(SafeMath).then((i) => {
+    return deployer.deploy(MiniMeTokenFactory)
+  }).then(()=> {
+    return deployer.deploy(APT, MiniMeTokenFactory.address)
+  }).then(()=> {
+    return deployer.deploy(PlaceHolder, APT.address)
+  }).then(()=> {
+    return deployer.link(SafeMath, PreSale)
+  }).then(()=> {
+    return deployer.deploy(PreSale, APT.address, PlaceHolder.address)
+  }).then(()=> {
+    return APT.deployed()
+  }).then((i) => {
+    i.changeController(PreSale.address)
+  }).then(()=> {
+    await deployer.deploy(PreSaleWallet, accounts[0], PreSale.address);
+  });
 };
