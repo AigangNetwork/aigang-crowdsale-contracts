@@ -1,7 +1,9 @@
 pragma solidity ^0.4.11;
 
 import "./SafeMath.sol";
+import "./ERC20.sol";
 import "./MiniMeToken.sol";
+import "./PreSaleWallet.sol";
 
 contract PreSale is Controlled, TokenController {
   using SafeMath for uint256;
@@ -11,6 +13,7 @@ contract PreSale is Controlled, TokenController {
 
   MiniMeToken public apt;
   address public place_holder;
+  address public preSaleWallet;
 
   uint256 public totalSupplyCap;            // Total APT supply to be generated
   uint256 public totalSold;                 // How much tokens have been sold
@@ -50,6 +53,7 @@ contract PreSale is Controlled, TokenController {
   }
 
   function initialize(
+      address _preSaleWallet,
       uint256 _totalSupplyCap,
       uint256 _minimum_investment,
       uint256 _startBlock,
@@ -61,6 +65,9 @@ contract PreSale is Controlled, TokenController {
     assert(apt.totalSupply() == 0);
     assert(apt.controller() == address(this));
     assert(apt.decimals() == 18);  // Same amount of decimals as ETH
+
+    require(_preSaleWallet != 0x0);
+    preSaleWallet = _preSaleWallet;
 
     assert(_startBlock >= getBlockNumber());
     require(_startBlock < _endBlock);
@@ -131,6 +138,7 @@ contract PreSale is Controlled, TokenController {
         assert(apt.generateTokens(_th, tokensGenerated));
         totalSold = totalSold.add(tokensGenerated);
 
+        preSaleWallet.transfer(toFund);
         NewSale(_th, toFund, tokensGenerated);
       } else {
         toFund = 0;
@@ -199,12 +207,16 @@ contract PreSale is Controlled, TokenController {
   /// @param _token The address of the token contract that you want to recover
   ///  set to 0 in case you want to extract ether.
   function claimTokens(address _token) public onlyController {
+    if (apt.controller() == address(this)) {
+      apt.claimTokens(_token);
+    }
+
     if (_token == 0x0) {
       controller.transfer(this.balance);
       return;
     }
 
-    MiniMeToken token = MiniMeToken(_token);
+    ERC20 token = ERC20(_token);
     uint256 balance = token.balanceOf(this);
     token.transfer(controller, balance);
     ClaimedTokens(_token, controller, balance);
