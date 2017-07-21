@@ -1,4 +1,4 @@
-var MiniMeTokenFactory = artifacts.require("MiniMeTokenFactory");
+uvar MiniMeTokenFactory = artifacts.require("MiniMeTokenFactory");
 var APT = artifacts.require("APT");
 var PlaceHolder = artifacts.require("PlaceHolder");
 var SafeMath = artifacts.require("SafeMath");
@@ -21,6 +21,6 @@ module.exports = function(deployer, chain, accounts) {
   }).then((i) => {
     i.changeController(PreSale.address)
   }).then(()=> {
-    await deployer.deploy(PreSaleWallet, accounts[0], PreSale.address);
+    return deployer.deploy(PreSaleWallet, accounts[0], PreSale.address);
   });
 };
