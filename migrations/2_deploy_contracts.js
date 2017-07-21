@@ -20,7 +20,5 @@ module.exports = function(deployer, chain, accounts) {
     return APT.deployed()
   }).then((i) => {
     i.changeController(PreSale.address)
-  }).then(()=> {
-    return deployer.deploy(PreSaleWallet, accounts[0], PreSale.address);
   });
 };
