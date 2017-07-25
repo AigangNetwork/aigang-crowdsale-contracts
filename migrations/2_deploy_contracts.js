@@ -1,9 +1,8 @@
-uvar MiniMeTokenFactory = artifacts.require("MiniMeTokenFactory");
+var MiniMeTokenFactory = artifacts.require("MiniMeTokenFactory");
 var APT = artifacts.require("APT");
 var PlaceHolder = artifacts.require("PlaceHolder");
 var SafeMath = artifacts.require("SafeMath");
 var PreSale = artifacts.require("PreSale");
-var PreSaleWallet = artifacts.require("PreSaleWallet");
 
 module.exports = function(deployer, chain, accounts) {
   deployer.deploy(SafeMath).then((i) => {
@@ -19,6 +18,6 @@ module.exports = function(deployer, chain, accounts) {
   }).then(()=> {
     return APT.deployed()
   }).then((i) => {
-    i.changeController(PreSale.address)
+    return i.changeController(PreSale.address)
   });
 };
