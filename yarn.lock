@@ -408,9 +408,9 @@ set-blocking@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/set-blocking/-/set-blocking-2.0.0.tgz#045f9782d011ae9a6803ddd382b24392b3d890f7"
 
-solc@0.4.11:
-  version "0.4.11"
-  resolved "https://registry.yarnpkg.com/solc/-/solc-0.4.11.tgz#2522eb43e7c0419bac2060b96e20a2593bfb5e8b"
+solc@0.4.15:
+  version "0.4.15"
+  resolved "https://registry.yarnpkg.com/solc/-/solc-0.4.15.tgz#8ae8f1606a124a3f81c28b9dcecb0964ebdf9f25"
   dependencies:
     fs-extra "^0.30.0"
     memorystream "^0.3.1"
@@ -458,13 +458,13 @@ supports-color@3.1.2:
   dependencies:
     has-flag "^1.0.0"
 
-truffle@^3.4.3:
-  version "3.4.3"
-  resolved "https://registry.yarnpkg.com/truffle/-/truffle-3.4.3.tgz#6d9ea4abea758b452b2d3769669eb7109146229e"
+truffle@^3.4.9:
+  version "3.4.9"
+  resolved "https://registry.yarnpkg.com/truffle/-/truffle-3.4.9.tgz#9186a2b8d51696fffae1439bf8eea3dd3deed44e"
   dependencies:
     mocha "^3.4.2"
     original-require "^1.0.1"
-    solc "0.4.11"
+    solc "0.4.15"
 
 validate-npm-package-license@^3.0.1:
   version "3.0.1"
