@@ -18,8 +18,11 @@ contract Contribution is Controlled, TokenController {
 
   uint256 public minimum_investment;
 
-  uint256 public startBlock;
-  uint256 public endBlock;
+  uint256 public startTime;
+  uint256 public endTime;
+
+  uint256 public initializedTime;
+  uint256 public finalizedTime;
 
   uint256 public initializedBlock;
   uint256 public finalizedBlock;
@@ -32,9 +35,9 @@ contract Contribution is Controlled, TokenController {
   }
 
   modifier contributionOpen() {
-    assert(getBlockNumber() >= startBlock &&
-           getBlockNumber() <= endBlock &&
-           finalizedBlock == 0);
+    assert(getBlockTimestamp() >= startTime &&
+           getBlockTimestamp() <= endTime &&
+           finalizedTime == 0);
     _;
   }
 
@@ -54,12 +57,12 @@ contract Contribution is Controlled, TokenController {
       address _contributionWallet,
       uint256 _totalSupplyCap,
       uint256 _minimum_investment,
-      uint256 _startBlock,
-      uint256 _endBlock
+      uint256 _startTime,
+      uint256 _endTime
   ) public onlyController {
     // Initialize only once
     require(initializedBlock == 0);
-
+    require(initializedTime == 0);
     assert(aix.totalSupply() == 0);
     assert(aix.controller() == address(this));
     assert(aix.decimals() == 18);  // Same amount of decimals as ETH
@@ -67,10 +70,10 @@ contract Contribution is Controlled, TokenController {
     require(_contributionWallet != 0x0);
     contributionWallet = _contributionWallet;
 
-    assert(_startBlock >= getBlockNumber());
-    require(_startBlock < _endBlock);
-    startBlock = _startBlock;
-    endBlock = _endBlock;
+    assert(_startTime >= getBlockTimestamp());
+    require(_startTime < _endTime);
+    startTime = _startTime;
+    endTime = _endTime;
 
     require(_totalSupplyCap > 0);
     totalSupplyCap = _totalSupplyCap;
@@ -78,6 +81,7 @@ contract Contribution is Controlled, TokenController {
     minimum_investment = _minimum_investment;
 
     initializedBlock = getBlockNumber();
+    initializedTime = getBlockTimestamp();
 
     require(_apt != 0x0);
     require(_exchanger != 0x0);
@@ -177,15 +181,17 @@ contract Contribution is Controlled, TokenController {
   }
 
   /// @notice This method will can be called by the controller before the contribution period
-  ///  end or by anybody after the `endBlock`. This method finalizes the contribution period
+  ///  end or by anybody after the `endTime`. This method finalizes the contribution period
   ///  by creating the remaining tokens and transferring the controller to the configured
   ///  controller.
   function finalize() public initialized {
     require(finalizedBlock == 0);
-    assert(getBlockNumber() >= startBlock);
-    assert(msg.sender == controller || getBlockNumber() > endBlock || tokensForSale() == 0);
+    require(finalizedTime == 0);
+    assert(getBlockTimestamp() >= startTime);
+    assert(msg.sender == controller || getBlockTimestamp() > endTime || tokensForSale() == 0);
 
     finalizedBlock = getBlockNumber();
+    finalizedTime = getBlockTimestamp();
 
     Finalized(finalizedBlock);
   }
@@ -196,7 +202,7 @@ contract Contribution is Controlled, TokenController {
 
   /// @return Total tokens availale for the sale in weis.
   function tokensForSale() public constant returns(uint256) {
-    return totalSupplyCap > totalSold ? totalSupplyCap - totalSold : 0;
+    return totalSupplyCap > totalSold ? totalSupplyCap.sub(totalSold) : 0;
   }
 
   //////////
@@ -207,6 +213,11 @@ contract Contribution is Controlled, TokenController {
   function getBlockNumber() internal constant returns (uint256) {
     return block.number;
   }
+
+  function getBlockTimestamp() internal constant returns (uint256) {
+    return block.timestamp;
+  }
+
 
 
   //////////
