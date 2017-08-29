@@ -48,7 +48,7 @@ contract Exchanger is Controlled {
   ///  corresponding AIXs
   function collect() public {
     // APT sholder could collect AIX right after contribution started
-    assert(getBlockNumber() > contribution.startBlock());
+    assert(getBlockTimestamp() > contribution.startTime());
 
     uint256 pre_sale_fixed_at = contribution.initializedBlock();
 
@@ -82,6 +82,11 @@ contract Exchanger is Controlled {
   /// @notice This function is overridden by the test Mocks.
   function getBlockNumber() internal constant returns (uint256) {
     return block.number;
+  }
+
+  /// @notice This function is overridden by the test Mocks.
+  function getBlockTimestamp() internal constant returns (uint256) {
+    return block.timestamp;
   }
 
   //////////
