@@ -49,6 +49,8 @@ contract Contribution is Controlled, TokenController {
   }
 
   function initialize(
+      address _apt,
+      address _exchanger,
       address _contributionWallet,
       uint256 _totalSupplyCap,
       uint256 _minimum_investment,
@@ -76,6 +78,17 @@ contract Contribution is Controlled, TokenController {
     minimum_investment = _minimum_investment;
 
     initializedBlock = getBlockNumber();
+
+    require(_apt != 0x0);
+    require(_exchanger != 0x0);
+    assert(
+      // Exchangerate from apt to aix 1250 considering 25% bonus.
+      aix.generateTokens(
+        _exchanger,
+        MiniMeToken(_apt).totalSupplyAt(initializedBlock).mul(1250)
+      )
+    );
+
     Initialized(initializedBlock);
   }
 
