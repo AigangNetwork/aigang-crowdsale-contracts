@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/AigangNetwork/aigang-contracts#readme",
   "dependencies": {
+    "chai": "^4.1.1",
     "truffle": "^3.4.9"
   }
 }
