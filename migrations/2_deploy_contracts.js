@@ -26,16 +26,24 @@ module.exports = function(deployer, chain, accounts) {
   return deployer.deploy(SafeMath).then(async () => {
     await deployer.deploy(MiniMeTokenFactory);
     const tokenFactory = await MiniMeTokenFactory.deployed();
+    const encodedParamsTokenFactory = abiEncoder.rawEncode(['address'], [tokenFactory.address]);
     await deployer.deploy(AIX, tokenFactory.address);
+    console.log('ENCODED PARAMS TOKENFACTORY: \n', encodedParamsTokenFactory.toString('hex'));
+    
     const aix = await AIX.deployed();
+    const encodedParamsContribution = abiEncoder.rawEncode(['address'], [aix.address]);
     await deployer.deploy(Contribution, aix.address);
+    console.log('CONTRIBUTION ENCODED: \n', encodedParamsContribution.toString('hex'));
+
     const contribution = await Contribution.deployed();
     await aix.changeController(contribution.address);
     await deployMultisig(deployer, accounts);
     const multiSig = await MultiSigWallet.deployed();
 
     const APT_TOKEN_ADDRESS = "0x23aE3C5B39B12f0693e05435EeaA1e51d8c61530"; 
+    const encodedExchangerParams = abiEncoder.rawEncode(['address', 'address', 'address'], [APT_TOKEN_ADDRESS, aix.address, contribution.address]);
     await deployer.deploy(Exchanger, APT_TOKEN_ADDRESS, aix.address, contribution.address);
+    console.log('EXCHANGER ENCODED: \n', encodedExchangerParams.toString('hex'));
     const exchanger = await Exchanger.deployed();
 
     const totalCap = new BigNumber(10**18 * 1000);
@@ -49,11 +57,6 @@ module.exports = function(deployer, chain, accounts) {
     // uint256 _minimum_investment,
     // uint256 _startTime,
     // uint256 _endTime
-    const values = [aix.address, exchanger.address, multiSig.address, totalCap.toString(10), minimum.toString(10), startTime, endTime];
-
-    const encodedParams = abiEncoder.rawEncode(['address', 'address', 'address', 'uint256', 'uint256', 'uint256', 'uint256'], values);
-    console.log('*******ENCODED PARAMS: ******\n');
-    console.log('encodedParams', encodedParams.toString('hex'));
     await contribution.initialize(aix.address, exchanger.address, multiSig.address, totalCap,
       minimum, startTime, endTime
     )
@@ -65,5 +68,9 @@ async function deployMultisig(deployer, accounts) {
   const owner1 = accounts[0];
   const owner2 = accounts[1];
   const numRequiredSignatures = 1;
+
+  const values = [owner1, owner2, numRequiredSignatures];
+  const encodedParams = abiEncoder.rawEncode(['address', 'address', 'uint256'], values);
+  console.log('MULTISIG PARAMS:', encodedParams.toString('hex'));
   return deployer.deploy(MultiSigWallet, [owner1, owner2], 1);
 }
