@@ -38,7 +38,7 @@ contract('Contribution', ([owner]) => {
             //public values
             const contributionWallet = await contribution.contributionWallet();
             const totalSupplyCap = await contribution.totalSupplyCap();
-            const totalSold = await contribution.totalSupplyCap();
+            const totalSold = await contribution.totalSold();
             const minimum_investment = await contribution.minimum_investment();
             const startTime = await contribution.startTime();
             const endTime = await contribution.endTime();
@@ -50,7 +50,7 @@ contract('Contribution', ([owner]) => {
             const transferable = await contribution.transferable();
             assert.equal(contributionWallet, multiSig);
             assert.equal(totalSupplyCap.toNumber(), totalCap);
-            // assert.equal(totalSold.toNumber(), 0);
+            assert.equal(totalSold.toNumber(), 0);
             assert.equal(minimum_investment.toNumber(), minimum +1);
             assert.equal(startTime.toNumber(), currentTime + 1);
             assert.equal(endTime.toNumber(), currentTime+ 10);
@@ -60,8 +60,6 @@ contract('Contribution', ([owner]) => {
             assert.equal(finalizedBlock.toNumber(), 0);
             assert.equal(transferable, false);
             assert.equal(paused, false);
-
-            console.log('totalSold', totalSold.toNumber());
     })
 })
 });

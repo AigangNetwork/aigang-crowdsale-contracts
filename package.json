@@ -20,6 +20,7 @@
   "homepage": "https://github.com/AigangNetwork/aigang-contracts#readme",
   "dependencies": {
     "chai": "^4.1.1",
+    "ethereumjs-abi": "^0.6.4",
     "truffle": "^3.4.9"
   }
 }
