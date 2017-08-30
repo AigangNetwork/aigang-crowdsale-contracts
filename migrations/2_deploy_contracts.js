@@ -1,7 +1,6 @@
 const MiniMeTokenFactory = artifacts.require("MiniMeTokenFactory");
 const AIX = artifacts.require("AIX");
 const PlaceHolder = artifacts.require("PlaceHolder");
-const SafeMath = artifacts.require("SafeMath");
 const PreSale = artifacts.require("PreSale");
 const Contribution = artifacts.require("Contribution");
 const MultiSigWallet = artifacts.require("MultiSigWallet");
@@ -23,12 +22,11 @@ const duration = {
 };
 
 module.exports = function(deployer, chain, accounts) {
-  return deployer.deploy(SafeMath).then(async () => {
-    await deployer.deploy(MiniMeTokenFactory);
+  return deployer.deploy(MiniMeTokenFactory).then(async () => {
     const tokenFactory = await MiniMeTokenFactory.deployed();
-    const encodedParamsTokenFactory = abiEncoder.rawEncode(['address'], [tokenFactory.address]);
+    const encodedParamsAIX = abiEncoder.rawEncode(['address'], [tokenFactory.address]);
     await deployer.deploy(AIX, tokenFactory.address);
-    console.log('ENCODED PARAMS TOKENFACTORY: \n', encodedParamsTokenFactory.toString('hex'));
+    console.log('ENCODED PARAMS AIX: \n', encodedParamsAIX.toString('hex'));
     
     const aix = await AIX.deployed();
     const encodedParamsContribution = abiEncoder.rawEncode(['address'], [aix.address]);
@@ -69,8 +67,8 @@ async function deployMultisig(deployer, accounts) {
   const owner2 = accounts[1];
   const numRequiredSignatures = 1;
 
-  const values = [owner1, owner2, numRequiredSignatures];
-  const encodedParams = abiEncoder.rawEncode(['address', 'address', 'uint256'], values);
-  console.log('MULTISIG PARAMS:', encodedParams.toString('hex'));
+  const values = [[owner1, owner2], numRequiredSignatures];
+  const encodedParams = abiEncoder.rawEncode(['address[]', 'uint256'], values);
+  console.log('MULTISIG PARAMS : \n', encodedParams.toString('hex'));
   return deployer.deploy(MultiSigWallet, [owner1, owner2], 1);
 }
