@@ -227,6 +227,8 @@ contract Contribution is Controlled, TokenController {
   function tokensForSale(address investor) public constant returns(uint256) {
     uint256 cap;
     uint256 sold;
+    // adding 1 day as a placeholder for X hours.
+    // This should change into a variable or coded into the contract.
     if (getBlockTimestamp() <= startTime + 1 days) {
       cap = totalSupplyCap.div(numWhitelistedInvestors);
       sold = individualSold[investor];
