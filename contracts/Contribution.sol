@@ -16,6 +16,10 @@ contract Contribution is Controlled, TokenController {
   uint256 public totalSupplyCap;            // Total AIX supply to be generated
   uint256 public totalSold;                 // How much tokens have been sold
 
+  uint256 public numWhitelistedInvestors;
+  mapping (address => bool) public canPurchase;
+  mapping (address => uint256) public individualSold;
+
   uint256 public minimum_investment;
 
   uint256 public startTime;
@@ -96,6 +100,18 @@ contract Contribution is Controlled, TokenController {
     Initialized(initializedBlock);
   }
 
+  function whitelist(address investor) {
+    if (canPurchase[investor]) return;
+    numWhitelistedInvestors++;
+    canPurchase[investor] = true;
+  }
+
+  function blacklist(address investor) {
+    if (!canPurchase[investor]) return;
+    numWhitelistedInvestors--;
+    canPurchase[investor] = false;
+  }
+
   /// @notice If anybody sends Ether directly to this contract, consider he is
   /// getting AIXs.
   function () public payable notPaused {
@@ -138,10 +154,11 @@ contract Contribution is Controlled, TokenController {
     } else {
       caller = msg.sender;
     }
+    assert(canPurchase[caller]);
     assert(!isContract(caller));
 
     uint256 toFund = msg.value;
-    uint256 leftForSale = tokensForSale();
+    uint256 leftForSale = tokensForSale(caller);
     if (toFund > 0) {
       if (leftForSale > 0) {
         uint256 tokensGenerated = toFund.mul(exchangeRate);
@@ -153,6 +170,7 @@ contract Contribution is Controlled, TokenController {
         }
 
         assert(aix.generateTokens(_th, tokensGenerated));
+        individualSold[caller] = individualSold[caller].add(tokensGenerated);
         totalSold = totalSold.add(tokensGenerated);
 
         contributionWallet.transfer(toFund);
@@ -200,9 +218,23 @@ contract Contribution is Controlled, TokenController {
   // Constant functions
   //////////
 
-  /// @return Total tokens availale for the sale in weis.
+  /// @return Total tokens available for the sale in weis.
   function tokensForSale() public constant returns(uint256) {
     return totalSupplyCap > totalSold ? totalSupplyCap.sub(totalSold) : 0;
+  }
+
+  /// @return Total tokens available for a specific address in weis.
+  function tokensForSale(address investor) public constant returns(uint256) {
+    uint256 cap;
+    uint256 sold;
+    if (getBlockTimestamp() <= startTime + 1 days) {
+      cap = totalSupplyCap.div(numWhitelistedInvestors);
+      sold = individualSold[investor];
+    } else {
+      cap = totalSupplyCap;
+      sold = totalSold;
+    }
+    return cap > sold ? cap.sub(sold) : 0;
   }
 
   //////////
