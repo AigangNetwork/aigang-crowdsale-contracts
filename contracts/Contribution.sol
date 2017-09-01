@@ -7,8 +7,6 @@ import "./MiniMeToken.sol";
 contract Contribution is Controlled, TokenController {
   using SafeMath for uint256;
 
-  uint256 constant public exchangeRate = 1000; // ETH-AIX exchange rate
-
   MiniMeToken public aix;
   bool public transferable;
   address public contributionWallet;
@@ -112,6 +110,21 @@ contract Contribution is Controlled, TokenController {
     canPurchase[investor] = false;
   }
 
+  // ETH-AIX exchange rate
+  function exchangeRate() constant public initialized returns (uint256 rate){
+    if (getBlockTimestamp() <= startTime + 1 hours) {
+      // 12% discount
+      // 0.88 ETH ≈ 1000 AIX
+      rate = 1136;
+    } else if (getBlockTimestamp() <= startTime + 2 hours) {
+      // 6% discount
+      // 0.94 ETH ≈ 1000 AIX
+      rate = 1064;
+    } else {
+      rate = 1000;
+    }
+  }
+
   /// @notice If anybody sends Ether directly to this contract, consider he is
   /// getting AIXs.
   function () public payable notPaused {
@@ -161,12 +174,12 @@ contract Contribution is Controlled, TokenController {
     uint256 leftForSale = tokensForSale(caller);
     if (toFund > 0) {
       if (leftForSale > 0) {
-        uint256 tokensGenerated = toFund.mul(exchangeRate);
+        uint256 tokensGenerated = toFund.mul(exchangeRate());
 
         // Check total supply cap reached, sell the all remaining tokens
         if (tokensGenerated > leftForSale) {
           tokensGenerated = leftForSale;
-          toFund = leftForSale.div(exchangeRate);
+          toFund = leftForSale.div(exchangeRate());
         }
 
         assert(aix.generateTokens(_th, tokensGenerated));
