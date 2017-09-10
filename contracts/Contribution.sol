@@ -11,12 +11,13 @@ contract Contribution is Controlled, TokenController {
   bool public transferable;
   address public contributionWallet;
 
-  uint256 public totalSupplyCap;            // Total AIX supply to be generated
-  uint256 public totalSold;                 // How much tokens have been sold
+  uint256 public totalEthCap;             // Total ETH to be collected
+  uint256 public totalEthCollected;       // How much ETH has been collected
+  uint256 public ethPreCollected;
 
   uint256 public numWhitelistedInvestors;
   mapping (address => bool) public canPurchase;
-  mapping (address => uint256) public individualSold;
+  mapping (address => uint256) public individualEthCollected;
 
   uint256 public minimum_investment;
 
@@ -57,7 +58,7 @@ contract Contribution is Controlled, TokenController {
       address _apt,
       address _exchanger,
       address _contributionWallet,
-      uint256 _totalSupplyCap,
+      uint256 _totalEthCap,
       uint256 _minimum_investment,
       uint256 _startTime,
       uint256 _endTime
@@ -77,8 +78,8 @@ contract Contribution is Controlled, TokenController {
     startTime = _startTime;
     endTime = _endTime;
 
-    require(_totalSupplyCap > 0);
-    totalSupplyCap = _totalSupplyCap;
+    require(_totalEthCap > 0);
+    totalEthCap = _totalEthCap;
 
     minimum_investment = _minimum_investment;
 
@@ -87,13 +88,12 @@ contract Contribution is Controlled, TokenController {
 
     require(_apt != 0x0);
     require(_exchanger != 0x0);
-    assert(
-      // Exchangerate from apt to aix 1250 considering 25% bonus.
-      aix.generateTokens(
-        _exchanger,
-        MiniMeToken(_apt).totalSupplyAt(initializedBlock).mul(1250)
-      )
-    );
+
+    ethPreCollected = MiniMeToken(_apt).totalSupplyAt(initializedBlock);
+    totalEthCollected = totalEthCollected.add(ethPreCollected);
+
+    // Exchangerate from apt to aix 1250 considering 25% bonus.
+    assert(aix.generateTokens(_exchanger, ethPreCollected.mul(1250)));
 
     Initialized(initializedBlock);
   }
@@ -111,7 +111,7 @@ contract Contribution is Controlled, TokenController {
   }
 
   // ETH-AIX exchange rate
-  function exchangeRate() constant public initialized returns (uint256 rate){
+  function exchangeRate() constant public initialized returns (uint256 rate) {
     if (getBlockTimestamp() <= startTime + 1 hours) {
       // 12% discount
       // 0.88 ETH ≈ 1000 AIX
@@ -171,26 +171,23 @@ contract Contribution is Controlled, TokenController {
     assert(!isContract(caller));
 
     uint256 toFund = msg.value;
-    uint256 leftForSale = tokensForSale(caller);
-    if (toFund > 0) {
-      if (leftForSale > 0) {
-        uint256 tokensGenerated = toFund.mul(exchangeRate());
+    uint256 toCollect = ethToCollect(caller);
 
-        // Check total supply cap reached, sell the all remaining tokens
-        if (tokensGenerated > leftForSale) {
-          tokensGenerated = leftForSale;
-          toFund = leftForSale.div(exchangeRate());
-        }
-
-        assert(aix.generateTokens(_th, tokensGenerated));
-        individualSold[caller] = individualSold[caller].add(tokensGenerated);
-        totalSold = totalSold.add(tokensGenerated);
-
-        contributionWallet.transfer(toFund);
-        NewSale(_th, toFund, tokensGenerated);
-      } else {
-        toFund = 0;
+    if (toCollect > 0) {
+      // Check total supply cap reached, sell the all remaining tokens
+      if (toFund > toCollect) {
+        toFund = toCollect;
       }
+      uint256 tokensGenerated = toFund.mul(exchangeRate());
+
+      assert(aix.generateTokens(_th, tokensGenerated));
+
+      contributionWallet.transfer(toFund);
+      individualEthCollected[caller] = individualEthCollected[caller].add(toFund);
+      totalEthCollected = totalEthCollected.add(toFund);
+      NewSale(_th, toFund, tokensGenerated);
+    } else {
+      toFund = 0;
     }
 
     uint256 toReturn = msg.value.sub(toFund);
@@ -219,7 +216,7 @@ contract Contribution is Controlled, TokenController {
     require(finalizedBlock == 0);
     require(finalizedTime == 0);
     assert(getBlockTimestamp() >= startTime);
-    assert(msg.sender == controller || getBlockTimestamp() > endTime || tokensForSale() == 0);
+    assert(msg.sender == controller || getBlockTimestamp() > endTime || ethToCollect() == 0);
 
     finalizedBlock = getBlockNumber();
     finalizedTime = getBlockTimestamp();
@@ -231,25 +228,25 @@ contract Contribution is Controlled, TokenController {
   // Constant functions
   //////////
 
-  /// @return Total tokens available for the sale in weis.
-  function tokensForSale() public constant returns(uint256) {
-    return totalSupplyCap > totalSold ? totalSupplyCap.sub(totalSold) : 0;
+  /// @return Total eth that still available for collection in weis.
+  function ethToCollect() public constant returns(uint256) {
+    return totalEthCap > totalEthCollected ? totalEthCap.sub(totalEthCollected) : 0;
   }
 
-  /// @return Total tokens available for a specific address in weis.
-  function tokensForSale(address investor) public constant returns(uint256) {
+  /// @return Total eth that still available for collection in weis.
+  function ethToCollect(address investor) public constant returns(uint256) {
     uint256 cap;
-    uint256 sold;
+    uint256 collected;
     // adding 1 day as a placeholder for X hours.
     // This should change into a variable or coded into the contract.
     if (getBlockTimestamp() <= startTime + 1 days) {
-      cap = totalSupplyCap.div(numWhitelistedInvestors);
-      sold = individualSold[investor];
+      cap = totalEthCap.sub(ethPreCollected).div(numWhitelistedInvestors);
+      collected = individualEthCollected[investor];
     } else {
-      cap = totalSupplyCap;
-      sold = totalSold;
+      cap = totalEthCap;
+      collected = totalEthCollected;
     }
-    return cap > sold ? cap.sub(sold) : 0;
+    return cap > collected ? cap.sub(collected) : 0;
   }
 
   //////////
