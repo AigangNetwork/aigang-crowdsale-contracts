@@ -10,6 +10,9 @@ contract Contribution is Controlled, TokenController {
   MiniMeToken public aix;
   bool public transferable;
   address public contributionWallet;
+  address public remainderHolder;
+  address public devHolder;
+  address public comunityHolder;
 
   uint256 public totalEthCap;             // Total ETH to be collected
   uint256 public totalEthCollected;       // How much ETH has been collected
@@ -58,6 +61,9 @@ contract Contribution is Controlled, TokenController {
       address _apt,
       address _exchanger,
       address _contributionWallet,
+      address _remainderHolder,
+      address _devHolder,
+      address _comunityHolder,
       uint256 _totalEthCap,
       uint256 _minimum_investment,
       uint256 _startTime,
@@ -72,6 +78,15 @@ contract Contribution is Controlled, TokenController {
 
     require(_contributionWallet != 0x0);
     contributionWallet = _contributionWallet;
+
+    require(_remainderHolder != 0x0);
+    remainderHolder = _remainderHolder;
+
+    require(_devHolder != 0x0);
+    devHolder = _devHolder;
+
+    require(_comunityHolder != 0x0);
+    comunityHolder = _comunityHolder;
 
     assert(_startTime >= getBlockTimestamp());
     require(_startTime < _endTime);
@@ -217,6 +232,15 @@ contract Contribution is Controlled, TokenController {
     require(finalizedTime == 0);
     assert(getBlockTimestamp() >= startTime);
     assert(msg.sender == controller || getBlockTimestamp() > endTime || ethToCollect() == 0);
+
+    // remainder will be minted and locked for 1 year.
+    aix.generateTokens(remainderHolder, ethToCollect().mul(1000));
+    // AIX generated so far is 51% of total
+    uint256 tokenCap = aix.totalSupply().mul(100).div(51);
+    // dev Wallet will have 20% of the total Tokens and will be able to retrieve quarterly.
+    aix.generateTokens(devHolder, tokenCap.mul(20).div(100));
+    // comunity Wallet will have access to 29% of the total Tokens.
+    aix.generateTokens(comunityHolder, tokenCap.mul(29).div(100));
 
     finalizedBlock = getBlockNumber();
     finalizedTime = getBlockTimestamp();
