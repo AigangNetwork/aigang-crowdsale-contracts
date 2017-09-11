@@ -12,7 +12,7 @@ contract Contribution is Controlled, TokenController {
   address public contributionWallet;
   address public remainderHolder;
   address public devHolder;
-  address public comunityHolder;
+  address public communityHolder;
 
   uint256 public totalEthCap;             // Total ETH to be collected
   uint256 public totalEthCollected;       // How much ETH has been collected
@@ -63,7 +63,7 @@ contract Contribution is Controlled, TokenController {
       address _contributionWallet,
       address _remainderHolder,
       address _devHolder,
-      address _comunityHolder,
+      address _communityHolder,
       uint256 _totalEthCap,
       uint256 _minimum_investment,
       uint256 _startTime,
@@ -85,8 +85,8 @@ contract Contribution is Controlled, TokenController {
     require(_devHolder != 0x0);
     devHolder = _devHolder;
 
-    require(_comunityHolder != 0x0);
-    comunityHolder = _comunityHolder;
+    require(_communityHolder != 0x0);
+    communityHolder = _communityHolder;
 
     assert(_startTime >= getBlockTimestamp());
     require(_startTime < _endTime);
@@ -239,8 +239,8 @@ contract Contribution is Controlled, TokenController {
     uint256 tokenCap = aix.totalSupply().mul(100).div(51);
     // dev Wallet will have 20% of the total Tokens and will be able to retrieve quarterly.
     aix.generateTokens(devHolder, tokenCap.mul(20).div(100));
-    // comunity Wallet will have access to 29% of the total Tokens.
-    aix.generateTokens(comunityHolder, tokenCap.mul(29).div(100));
+    // community Wallet will have access to 29% of the total Tokens.
+    aix.generateTokens(communityHolder, tokenCap.mul(29).div(100));
 
     finalizedBlock = getBlockNumber();
     finalizedTime = getBlockTimestamp();
