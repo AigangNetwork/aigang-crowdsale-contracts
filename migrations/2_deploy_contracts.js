@@ -48,14 +48,27 @@ module.exports = function(deployer, chain, accounts) {
     const minimum = new BigNumber(10**18 * 1);
     const startTime = latestTime() + duration.minutes(5);
     const endTime = latestTime() + duration.weeks(5);
+
+    const _remainderHolder = '0x123';
+    const _devHolder = '0x123431';
+    const _communityHolder = '0x12343112322';
     // address _apt,
     // address _exchanger,
     // address _contributionWallet,
-    // uint256 _totalSupplyCap,
+    // address _remainderHolder,
+    // address _devHolder,
+    // address _communityHolder,
+    // uint256 _totalEthCap,
     // uint256 _minimum_investment,
     // uint256 _startTime,
     // uint256 _endTime
-    await contribution.initialize(aix.address, exchanger.address, multiSig.address, totalCap,
+    await contribution.initialize(aix.address, 
+      exchanger.address,
+      multiSig.address, 
+      _remainderHolder,
+      _devHolder,
+      _communityHolder,
+      totalCap,
       minimum, startTime, endTime
     )
   });

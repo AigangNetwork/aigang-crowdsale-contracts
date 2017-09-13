@@ -19,6 +19,11 @@
   },
   "homepage": "https://github.com/AigangNetwork/aigang-contracts#readme",
   "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "babel-preset-stage-3": "^6.24.1",
+    "babel-register": "^6.26.0",
     "chai": "^4.1.1",
     "ethereumjs-abi": "^0.6.4",
     "truffle": "^3.4.9"
