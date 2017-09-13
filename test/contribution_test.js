@@ -11,6 +11,15 @@ function getTime() {
   return Math.floor(Date.now() / 1000);
 }
 
+const duration = {
+  seconds: function (val) { return val },
+  minutes: function (val) { return val * this.seconds(60) },
+  hours: function (val) { return val * this.minutes(60) },
+  days: function (val) { return val * this.hours(24) },
+  weeks: function (val) { return val * this.days(7) },
+  years: function (val) { return val * this.days(365) }
+};
+
 async function latestBlock() {
   return new Promise((resolve, reject) => {
     web3.eth.getBlockNumber((error, number) => {
@@ -23,6 +32,20 @@ async function latestBlock() {
 }
 
 contract("Contribution", ([miner, owner]) => {
+  let aix;
+  let contribution;
+  let exchanger;
+  let apt;
+  let tokensPreSold = new BigNumber(10 ** 18 * 50);
+  let multiSig;
+  let totalCap;
+  let minimum;
+  let currentTime;
+  let _remainderHolder;
+  let _devHolder;
+  let _communityHolder;
+  let latestBlockNumber;
+
   it("#constructor accepts MiniMe instance", async function () {
     const contribution = await MockContribution.new(
       "0x0000000000000000000000000000000000000123"
@@ -35,20 +58,6 @@ contract("Contribution", ([miner, owner]) => {
     );
   });
   describe("#initialize", async function () {
-    let aix;
-    let contribution;
-    let exchanger;
-    let apt;
-    let tokensPreSold = new BigNumber(10 ** 18 * 50);
-    let multiSig;
-    let totalCap;
-    let minimum;
-    let currentTime;
-    let _remainderHolder;
-    let _devHolder;
-    let _communityHolder;
-    let latestBlockNumber;
-
     beforeEach(async function () {
       const tokenFactory = await MiniMeTokenFactory.new();
       const tokenFactoryAPT = await MiniMeTokenFactory.new();
@@ -139,7 +148,7 @@ contract("Contribution", ([miner, owner]) => {
       const initializedBlock = await contribution.initializedBlock();
 
       await contribution.setBlockTimestamp(currentTime + 10);
-      await contribution.setBlockNumber(latestBlockNumber+ 10);
+      await contribution.setBlockNumber(latestBlockNumber + 10);
 
       await expectThrow(contribution.initialize(
         apt.address,
@@ -156,7 +165,7 @@ contract("Contribution", ([miner, owner]) => {
       assert.equal(initializedTime.toNumber(), currentTime);
       assert.equal(initializedBlock.toNumber(), latestBlockNumber);
     })
-    it('throws when controller of aix is not contribution', async function(){
+    it('throws when controller of aix is not contribution', async function () {
       await expectThrow(contribution.initialize(
         apt.address,
         exchanger.address,
@@ -175,7 +184,7 @@ contract("Contribution", ([miner, owner]) => {
       assert.equal(initializedBlock.toNumber(), 0);
 
     })
-    it('throws startTime is less then currentTime', async function(){
+    it('throws startTime is less then currentTime', async function () {
       await aix.changeController(contribution.address);
       await expectThrow(contribution.initialize(
         apt.address,
@@ -194,7 +203,7 @@ contract("Contribution", ([miner, owner]) => {
       assert.equal(initializedTime.toNumber(), 0);
       assert.equal(initializedBlock.toNumber(), 0);
     })
-    it('throws totalEthCap is 0', async function(){
+    it('throws totalEthCap is 0', async function () {
       await aix.changeController(contribution.address);
       await expectThrow(contribution.initialize(
         apt.address,
@@ -213,7 +222,7 @@ contract("Contribution", ([miner, owner]) => {
       assert.equal(initializedTime.toNumber(), 0);
       assert.equal(initializedBlock.toNumber(), 0);
     })
-    it('throws when startTime > endTime', async function(){
+    it('throws when startTime > endTime', async function () {
       await aix.changeController(contribution.address);
       await expectThrow(contribution.initialize(
         apt.address,
@@ -247,4 +256,54 @@ contract("Contribution", ([miner, owner]) => {
       assert.equal(await contribution.numWhitelistedInvestors(), 0);
     });
   });
+  describe('#exchangeRate', async function () {
+    beforeEach(async function () {
+      const tokenFactory = await MiniMeTokenFactory.new();
+      const tokenFactoryAPT = await MiniMeTokenFactory.new();
+      apt = await APT.new(tokenFactoryAPT.address);
+      await apt.generateTokens(owner, tokensPreSold);
+      aix = await AIX.new(tokenFactory.address);
+      contribution = await MockContribution.new(aix.address);
+      exchanger = await Exchanger.new(apt.address, aix.address, contribution.address);
+
+      multiSig = owner;
+      totalCap = 1000 * 10 ** 18; //1000 eth
+      minimum = 10 ** 18; // 1 eth
+      currentTime = getTime();
+      _remainderHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF1';
+      _devHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF2';
+      _communityHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF3';
+
+      latestBlockNumber = await latestBlock();
+
+      await contribution.setBlockTimestamp(currentTime);
+      await contribution.setBlockNumber(latestBlockNumber);
+      await aix.changeController(contribution.address);
+      await contribution.initialize(
+        apt.address,
+        exchanger.address,
+        multiSig,
+        _remainderHolder,
+        _devHolder,
+        _communityHolder,
+        totalCap,
+        minimum,
+        currentTime + 1,
+        currentTime + 10
+      );
+    })
+    it('calculates different discount rates based on time ', async function () {
+      //first hour
+      let exchnageRate = await contribution.exchangeRate();
+      assert.equal(exchnageRate.toNumber(), 1136); //12% discount. 0.88eth ~1000 aix
+      // second hour
+      await contribution.setBlockTimestamp(currentTime + duration.hours(2));
+      exchnageRate = await contribution.exchangeRate();
+
+      //after 2 hr.
+      await contribution.setBlockTimestamp(currentTime + duration.hours(2) + duration.minutes(1));
+      exchnageRate = await contribution.exchangeRate();
+      assert.equal(exchnageRate.toNumber(), 1000); // 6% discount
+    });
+  })
 });
