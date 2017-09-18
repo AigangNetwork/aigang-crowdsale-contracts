@@ -27,5 +27,9 @@ contract MockContribution is Contribution {
     function setBlockTimestamp(uint256 _timeStamp) public {
         timeStamp = _timeStamp;
     }
+
+    function totalEthToCollect() public constant returns(uint256) {
+        return super.ethToCollect();
+    }
     
 }

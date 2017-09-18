@@ -45,7 +45,6 @@ module.exports = function(deployer, chain, accounts) {
     const exchanger = await Exchanger.deployed();
 
     const totalCap = new BigNumber(10**18 * 1000);
-    const minimum = new BigNumber(10**18 * 1);
     const startTime = latestTime() + duration.minutes(5);
     const endTime = latestTime() + duration.weeks(5);
 
@@ -59,7 +58,6 @@ module.exports = function(deployer, chain, accounts) {
     // address _devHolder,
     // address _communityHolder,
     // uint256 _totalEthCap,
-    // uint256 _minimum_investment,
     // uint256 _startTime,
     // uint256 _endTime
     await contribution.initialize(aix.address, 
@@ -69,7 +67,7 @@ module.exports = function(deployer, chain, accounts) {
       _devHolder,
       _communityHolder,
       totalCap,
-      minimum, startTime, endTime
+      startTime, endTime
     )
   });
 };

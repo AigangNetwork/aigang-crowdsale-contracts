@@ -8,7 +8,7 @@ const BigNumber = web3.BigNumber;
 import { expectThrow } from './utils.js';
 
 function getTime() {
-  return Math.floor(Date.now() / 1000);
+  return web3.eth.getBlock('latest').timestamp;  
 }
 
 const duration = {
@@ -39,7 +39,7 @@ contract("Contribution", ([miner, owner]) => {
   let tokensPreSold = new BigNumber(10 ** 18 * 50);
   let multiSig;
   let totalCap;
-  let minimum;
+  let sendingAmount;
   let currentTime;
   let _remainderHolder;
   let _devHolder;
@@ -68,8 +68,8 @@ contract("Contribution", ([miner, owner]) => {
       exchanger = await Exchanger.new(apt.address, aix.address, contribution.address);
 
       multiSig = owner;
-      totalCap = 1000 * 10 ** 18; //1000 eth
-      minimum = 10 ** 18; // 1 eth
+      totalCap = new BigNumber(1000 * 10 ** 18); //1000 eth
+      sendingAmount = new BigNumber(10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF1';
       _devHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF2';
@@ -93,7 +93,6 @@ contract("Contribution", ([miner, owner]) => {
         _devHolder,
         _communityHolder,
         totalCap,
-        minimum,
         currentTime + 1,
         currentTime + 10
       );
@@ -101,7 +100,6 @@ contract("Contribution", ([miner, owner]) => {
       const contributionWallet = await contribution.contributionWallet();
       const totalSupplyCap = await contribution.totalEthCap();
       const totalSold = await contribution.totalEthCollected();
-      const minimum_investment = await contribution.minimum_investment();
       const startTime = await contribution.startTime();
       const endTime = await contribution.endTime();
       const initializedTime = await contribution.initializedTime();
@@ -120,7 +118,6 @@ contract("Contribution", ([miner, owner]) => {
       assert.equal(contributionWallet, multiSig);
       assert.equal(totalSupplyCap.toNumber(), totalCap);
       assert.equal(totalSold.toString(10), tokensPreSold.toString(10));
-      assert.equal(minimum_investment.toNumber(), minimum + 1);
       assert.equal(startTime.toNumber(), currentTime + 1);
       assert.equal(endTime.toNumber(), currentTime + 10);
       assert.equal(initializedTime.toNumber(), currentTime);
@@ -140,7 +137,6 @@ contract("Contribution", ([miner, owner]) => {
         _devHolder,
         _communityHolder,
         totalCap,
-        minimum,
         currentTime + 1,
         currentTime + 10
       );
@@ -158,7 +154,6 @@ contract("Contribution", ([miner, owner]) => {
         _devHolder,
         _communityHolder,
         totalCap,
-        minimum,
         currentTime + 1,
         currentTime + 10
       ));
@@ -174,7 +169,6 @@ contract("Contribution", ([miner, owner]) => {
         _devHolder,
         _communityHolder,
         totalCap,
-        minimum,
         currentTime + 1,
         currentTime + 10
       ));
@@ -194,7 +188,6 @@ contract("Contribution", ([miner, owner]) => {
         _devHolder,
         _communityHolder,
         totalCap,
-        minimum,
         currentTime - 1,
         currentTime + 10
       ));
@@ -213,7 +206,6 @@ contract("Contribution", ([miner, owner]) => {
         _devHolder,
         _communityHolder,
         0,
-        minimum,
         currentTime + 1,
         currentTime + 10
       ));
@@ -232,7 +224,6 @@ contract("Contribution", ([miner, owner]) => {
         _devHolder,
         _communityHolder,
         totalCap,
-        minimum,
         currentTime + 11,
         currentTime + 1
       ));
@@ -267,8 +258,8 @@ contract("Contribution", ([miner, owner]) => {
       exchanger = await Exchanger.new(apt.address, aix.address, contribution.address);
 
       multiSig = owner;
-      totalCap = 1000 * 10 ** 18; //1000 eth
-      minimum = 10 ** 18; // 1 eth
+      totalCap = new BigNumber(1000 * 10 ** 18); //1000 eth
+      sendingAmount = new BigNumber(10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF1';
       _devHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF2';
@@ -287,7 +278,6 @@ contract("Contribution", ([miner, owner]) => {
         _devHolder,
         _communityHolder,
         totalCap,
-        minimum,
         currentTime + 1,
         currentTime + 10
       );
@@ -305,5 +295,80 @@ contract("Contribution", ([miner, owner]) => {
       exchnageRate = await contribution.exchangeRate();
       assert.equal(exchnageRate.toNumber(), 1000); // 6% discount
     });
+  })
+
+  describe('#proxyPayment', async function () {
+    beforeEach(async function () {
+      const tokenFactory = await MiniMeTokenFactory.new();
+      const tokenFactoryAPT = await MiniMeTokenFactory.new();
+      apt = await APT.new(tokenFactoryAPT.address);
+      await apt.generateTokens(owner, tokensPreSold);
+      aix = await AIX.new(tokenFactory.address);
+      contribution = await MockContribution.new(aix.address);
+      exchanger = await Exchanger.new(apt.address, aix.address, contribution.address);
+
+      multiSig = owner;
+      totalCap = new BigNumber(1000 * 10 ** 18); //1000 eth
+      sendingAmount = new BigNumber(1 * 10 ** 18); // 1 eth
+      currentTime = getTime();
+      _remainderHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF1';
+      _devHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF2';
+      _communityHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF3';
+
+      latestBlockNumber = await latestBlock();
+
+      await contribution.setBlockTimestamp(currentTime);
+      await contribution.setBlockNumber(latestBlockNumber);
+      await aix.changeController(contribution.address);
+      await contribution.initialize(
+        apt.address,
+        exchanger.address,
+        multiSig,
+        _remainderHolder,
+        _devHolder,
+        _communityHolder,
+        totalCap,
+        currentTime + duration.seconds(2),
+        currentTime + duration.hours(1)
+      );
+    })
+    it('happy path with fallback', async function () {
+      assert.isFalse(await contribution.canPurchase(owner));
+      await contribution.setBlockTimestamp(currentTime + duration.minutes(2) );
+      await contribution.setBlockNumber(latestBlockNumber + 10);
+      await contribution.whitelistAddresses([owner, miner, _remainderHolder, _devHolder]);
+      let ethToCollect = await contribution.ethToCollect(owner);
+      let totalEthToCollect = await contribution.totalEthToCollect();
+      
+      await contribution.sendTransaction({ from: owner, value: sendingAmount.mul(4)});
+      await contribution.sendTransaction({ from: miner, value: sendingAmount.mul(2)});
+      const individualEthCollected = await contribution.individualEthCollected(owner);
+      let totalEthCollected = await contribution.totalEthCollected();
+      const newtotal = sendingAmount.mul(4).add(sendingAmount.mul(2)).add(tokensPreSold);
+      assert.equal(totalEthCollected.toString(10), newtotal.toString(10));
+      assert.equal(individualEthCollected.toString(10), sendingAmount.mul(4).toString(10));
+      const balanceOfOwner = await aix.balanceOf(owner);
+      const balanceOfMiner = await aix.balanceOf(miner);
+      assert.equal(balanceOfOwner.toNumber(), sendingAmount.mul(4).mul(1136));
+      assert.equal(balanceOfMiner.toNumber(), sendingAmount.mul(2).mul(1136));
+    });
+
+    it('throws when below sendingAmount', async function () {
+      assert.isFalse(await contribution.canPurchase(owner));
+      await contribution.setBlockTimestamp(currentTime + duration.minutes(2) );
+      await contribution.setBlockNumber(latestBlockNumber + 10);
+      await contribution.whitelist(owner);
+      await contribution.sendTransaction({ from: owner, value: 1 });
+      const balanceOfOwner = await aix.balanceOf(owner);
+      assert.equal(balanceOfOwner.toNumber(), 1136);
+    });
+
+    it('allows multisig to buy tokens', async function() {})
+    it('contribution wallet should receive funds', async function() {})
+  })
+
+  describe('#ethToCollect', async function(){
+    it('within first day')
+    it('after first day')
   })
 });

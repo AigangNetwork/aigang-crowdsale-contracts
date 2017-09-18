@@ -22,8 +22,6 @@ contract Contribution is Controlled, TokenController {
   mapping (address => bool) public canPurchase;
   mapping (address => uint256) public individualEthCollected;
 
-  uint256 public minimum_investment;
-
   uint256 public startTime;
   uint256 public endTime;
 
@@ -65,7 +63,6 @@ contract Contribution is Controlled, TokenController {
       address _devHolder,
       address _communityHolder,
       uint256 _totalEthCap,
-      uint256 _minimum_investment,
       uint256 _startTime,
       uint256 _endTime
   ) public onlyController {
@@ -96,8 +93,6 @@ contract Contribution is Controlled, TokenController {
     require(_totalEthCap > 0);
     totalEthCap = _totalEthCap;
 
-    minimum_investment = _minimum_investment;
-
     initializedBlock = getBlockNumber();
     initializedTime = getBlockTimestamp();
 
@@ -113,13 +108,39 @@ contract Contribution is Controlled, TokenController {
     Initialized(initializedBlock);
   }
 
-  function whitelist(address investor) {
+  /// @notice interface for founders to blacklist investors
+  /// @param _investors array of investors
+  function blacklistAddresses(address[] _investors) public onlyController {
+    for (uint256 i = 0; i < _investors.length; i++) {
+      address investorAddress = _investors[i];
+      if(!canPurchase[investorAddress]) {
+        continue;
+      }
+      canPurchase[investorAddress] = false;
+      numWhitelistedInvestors--;
+    }
+  }
+
+  /// @notice interface for founders to whitelist investors
+  /// @param _investors array of investors
+  function whitelistAddresses(address[] _investors) public onlyController {
+    for (uint256 i = 0; i < _investors.length; i++) {
+      address investorAddress = _investors[i];
+      if(canPurchase[investorAddress]) {
+        continue;
+      }
+      canPurchase[investorAddress] = true;
+      numWhitelistedInvestors++;
+    }
+  }
+
+  function whitelist(address investor) public onlyController {
     if (canPurchase[investor]) return;
     numWhitelistedInvestors++;
     canPurchase[investor] = true;
   }
 
-  function blacklist(address investor) {
+  function blacklist(address investor) public onlyController {
     if (!canPurchase[investor]) return;
     numWhitelistedInvestors--;
     canPurchase[investor] = false;
@@ -173,20 +194,10 @@ contract Contribution is Controlled, TokenController {
   }
 
   function doBuy(address _th) internal {
-    require(msg.value >= minimum_investment);
-
-    // Antispam mechanism
-    address caller;
-    if (msg.sender == address(aix)) {
-      caller = _th;
-    } else {
-      caller = msg.sender;
-    }
-    assert(canPurchase[caller]);
-    assert(!isContract(caller));
+    require(canPurchase[_th]);
 
     uint256 toFund = msg.value;
-    uint256 toCollect = ethToCollect(caller);
+    uint256 toCollect = ethToCollect(_th);
 
     if (toCollect > 0) {
       // Check total supply cap reached, sell the all remaining tokens
@@ -194,11 +205,11 @@ contract Contribution is Controlled, TokenController {
         toFund = toCollect;
       }
       uint256 tokensGenerated = toFund.mul(exchangeRate());
-
-      assert(aix.generateTokens(_th, tokensGenerated));
+      require(tokensGenerated > 0);
+      require(aix.generateTokens(_th, tokensGenerated));
 
       contributionWallet.transfer(toFund);
-      individualEthCollected[caller] = individualEthCollected[caller].add(toFund);
+      individualEthCollected[_th] = individualEthCollected[_th].add(toFund);
       totalEthCollected = totalEthCollected.add(toFund);
       NewSale(_th, toFund, tokensGenerated);
     } else {
@@ -207,7 +218,7 @@ contract Contribution is Controlled, TokenController {
 
     uint256 toReturn = msg.value.sub(toFund);
     if (toReturn > 0) {
-      caller.transfer(toReturn);
+      _th.transfer(toReturn);
     }
   }
 
