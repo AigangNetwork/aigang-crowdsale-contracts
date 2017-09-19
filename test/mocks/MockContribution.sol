@@ -27,5 +27,13 @@ contract MockContribution is Contribution {
     function setBlockTimestamp(uint256 _timeStamp) public {
         timeStamp = _timeStamp;
     }
+
+    function totalWeiToCollect() public constant returns(uint256) {
+        super.weiToCollect();
+    }
+
+    function investorWeiToCollect(address investor) public constant returns(uint256) {
+        super.weiToCollect(investor);
+    }
     
 }

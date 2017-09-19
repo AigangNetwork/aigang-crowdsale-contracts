@@ -14,15 +14,13 @@ contract Contribution is Controlled, TokenController {
   address public devHolder;
   address public communityHolder;
 
-  uint256 public totalEthCap;             // Total ETH to be collected
-  uint256 public totalEthCollected;       // How much ETH has been collected
-  uint256 public ethPreCollected;
+  uint256 public totalWeiCap;             // Total Wei to be collected
+  uint256 public totalWeiCollected;       // How much Wei has been collected
+  uint256 public weiPreCollected;
 
   uint256 public numWhitelistedInvestors;
   mapping (address => bool) public canPurchase;
-  mapping (address => uint256) public individualEthCollected;
-
-  uint256 public minimum_investment;
+  mapping (address => uint256) public individualWeiCollected;
 
   uint256 public startTime;
   uint256 public endTime;
@@ -64,8 +62,7 @@ contract Contribution is Controlled, TokenController {
       address _remainderHolder,
       address _devHolder,
       address _communityHolder,
-      uint256 _totalEthCap,
-      uint256 _minimum_investment,
+      uint256 _totalWeiCap,
       uint256 _startTime,
       uint256 _endTime
   ) public onlyController {
@@ -93,10 +90,8 @@ contract Contribution is Controlled, TokenController {
     startTime = _startTime;
     endTime = _endTime;
 
-    require(_totalEthCap > 0);
-    totalEthCap = _totalEthCap;
-
-    minimum_investment = _minimum_investment;
+    require(_totalWeiCap > 0);
+    totalWeiCap = _totalWeiCap;
 
     initializedBlock = getBlockNumber();
     initializedTime = getBlockTimestamp();
@@ -104,22 +99,38 @@ contract Contribution is Controlled, TokenController {
     require(_apt != 0x0);
     require(_exchanger != 0x0);
 
-    ethPreCollected = MiniMeToken(_apt).totalSupplyAt(initializedBlock);
-    totalEthCollected = totalEthCollected.add(ethPreCollected);
+    weiPreCollected = MiniMeToken(_apt).totalSupplyAt(initializedBlock);
+    totalWeiCollected = totalWeiCollected.add(weiPreCollected);
 
     // Exchangerate from apt to aix 1250 considering 25% bonus.
-    assert(aix.generateTokens(_exchanger, ethPreCollected.mul(1250)));
+    assert(aix.generateTokens(_exchanger, weiPreCollected.mul(1250)));
 
     Initialized(initializedBlock);
   }
 
-  function whitelist(address investor) {
+  /// @notice interface for founders to blacklist investors
+  /// @param _investors array of investors
+  function blacklistAddresses(address[] _investors) public onlyController {
+    for (uint256 i = 0; i < _investors.length; i++) {
+      blacklist(_investors[i]);
+    }
+  }
+
+  /// @notice interface for founders to whitelist investors
+  /// @param _investors array of investors
+  function whitelistAddresses(address[] _investors) public onlyController {
+    for (uint256 i = 0; i < _investors.length; i++) {
+      whitelist(_investors[i]);
+    }
+  }
+
+  function whitelist(address investor) public onlyController {
     if (canPurchase[investor]) return;
     numWhitelistedInvestors++;
     canPurchase[investor] = true;
   }
 
-  function blacklist(address investor) {
+  function blacklist(address investor) public onlyController {
     if (!canPurchase[investor]) return;
     numWhitelistedInvestors--;
     canPurchase[investor] = false;
@@ -173,20 +184,10 @@ contract Contribution is Controlled, TokenController {
   }
 
   function doBuy(address _th) internal {
-    require(msg.value >= minimum_investment);
-
-    // Antispam mechanism
-    address caller;
-    if (msg.sender == address(aix)) {
-      caller = _th;
-    } else {
-      caller = msg.sender;
-    }
-    assert(canPurchase[caller]);
-    assert(!isContract(caller));
+    require(canPurchase[_th]);
 
     uint256 toFund = msg.value;
-    uint256 toCollect = ethToCollect(caller);
+    uint256 toCollect = weiToCollect(_th);
 
     if (toCollect > 0) {
       // Check total supply cap reached, sell the all remaining tokens
@@ -194,12 +195,12 @@ contract Contribution is Controlled, TokenController {
         toFund = toCollect;
       }
       uint256 tokensGenerated = toFund.mul(exchangeRate());
-
-      assert(aix.generateTokens(_th, tokensGenerated));
+      require(tokensGenerated > 0);
+      require(aix.generateTokens(_th, tokensGenerated));
 
       contributionWallet.transfer(toFund);
-      individualEthCollected[caller] = individualEthCollected[caller].add(toFund);
-      totalEthCollected = totalEthCollected.add(toFund);
+      individualWeiCollected[_th] = individualWeiCollected[_th].add(toFund);
+      totalWeiCollected = totalWeiCollected.add(toFund);
       NewSale(_th, toFund, tokensGenerated);
     } else {
       toFund = 0;
@@ -207,7 +208,7 @@ contract Contribution is Controlled, TokenController {
 
     uint256 toReturn = msg.value.sub(toFund);
     if (toReturn > 0) {
-      caller.transfer(toReturn);
+      _th.transfer(toReturn);
     }
   }
 
@@ -231,10 +232,10 @@ contract Contribution is Controlled, TokenController {
     require(finalizedBlock == 0);
     require(finalizedTime == 0);
     assert(getBlockTimestamp() >= startTime);
-    assert(msg.sender == controller || getBlockTimestamp() > endTime || ethToCollect() == 0);
+    assert(msg.sender == controller || getBlockTimestamp() > endTime || weiToCollect() == 0);
 
     // remainder will be minted and locked for 1 year.
-    aix.generateTokens(remainderHolder, ethToCollect().mul(1000));
+    aix.generateTokens(remainderHolder, weiToCollect().mul(1000));
     // AIX generated so far is 51% of total
     uint256 tokenCap = aix.totalSupply().mul(100).div(51);
     // dev Wallet will have 20% of the total Tokens and will be able to retrieve quarterly.
@@ -253,22 +254,22 @@ contract Contribution is Controlled, TokenController {
   //////////
 
   /// @return Total eth that still available for collection in weis.
-  function ethToCollect() public constant returns(uint256) {
-    return totalEthCap > totalEthCollected ? totalEthCap.sub(totalEthCollected) : 0;
+  function weiToCollect() public constant returns(uint256) {
+    return totalWeiCap > totalWeiCollected ? totalWeiCap.sub(totalWeiCollected) : 0;
   }
 
   /// @return Total eth that still available for collection in weis.
-  function ethToCollect(address investor) public constant returns(uint256) {
+  function weiToCollect(address investor) public constant returns(uint256) {
     uint256 cap;
     uint256 collected;
     // adding 1 day as a placeholder for X hours.
     // This should change into a variable or coded into the contract.
     if (getBlockTimestamp() <= startTime + 1 days) {
-      cap = totalEthCap.sub(ethPreCollected).div(numWhitelistedInvestors);
-      collected = individualEthCollected[investor];
+      cap = totalWeiCap.sub(weiPreCollected).div(numWhitelistedInvestors);
+      collected = individualWeiCollected[investor];
     } else {
-      cap = totalEthCap;
-      collected = totalEthCollected;
+      cap = totalWeiCap;
+      collected = totalWeiCollected;
     }
     return cap > collected ? cap.sub(collected) : 0;
   }

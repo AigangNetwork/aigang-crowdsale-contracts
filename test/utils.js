@@ -1,3 +1,4 @@
+const assert = require("chai").use(require('chai-as-promised')).assert;
 export async function expectThrow(promise) {
     try {
         const networkId = web3.version.network;

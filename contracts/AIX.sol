@@ -25,4 +25,8 @@ contract AIX is MiniMeToken {
       "AIX",                    // Symbol
       true                      // Enable transfers
     ) {}
+
+    function() payable {
+      require(false);
+    }
 }
