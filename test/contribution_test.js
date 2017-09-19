@@ -361,7 +361,33 @@ contract("Contribution", ([miner, owner]) => {
       assert.equal(balanceOfOwner.toNumber(), 1136);
     });
 
-    it('allows multisig to buy tokens', async function() {})
+    it('allows multisig to buy tokens', async function() {
+      const MultiSigWallet = artifacts.require("MultiSigWallet");
+      const multiSig = await MultiSigWallet.new([miner, owner], 1);
+      await contribution.setBlockTimestamp(currentTime + duration.minutes(2) );
+      await contribution.setBlockNumber(latestBlockNumber + 10);
+
+      await web3.eth.sendTransaction({ from: miner, to: multiSig.address, value: new BigNumber(10**18) });
+      await contribution.whitelistAddresses([multiSig.address]);
+
+      const encodedProxyPaymentCall = contribution.contract.proxyPayment.getData(contribution.address);
+
+      let totalWeiCollected = await contribution.totalWeiCollected();
+      assert.equal(tokensPreSold.toString(10), totalWeiCollected.toString(10));
+
+      const amountToSendFromMultiSig = new BigNumber(10**18 * 0.5);
+      await multiSig.submitTransaction(contribution.address, amountToSendFromMultiSig, '0x0');
+      const individualWeiCollected = await contribution.individualWeiCollected(multiSig.address);
+      totalWeiCollected = await contribution.totalWeiCollected();
+
+      const newtotal = amountToSendFromMultiSig.add(tokensPreSold);
+
+      assert.equal(totalWeiCollected.toString(10), newtotal.toString(10), 'totalWeiCollected is incorrect');
+
+      const balanceOf = await aix.balanceOf(multiSig.address);
+      assert.equal(balanceOf.toString(10), amountToSendFromMultiSig.mul(1136).toString(10));
+
+    })
     it('contribution wallet should receive funds', async function() {})
   })
 
