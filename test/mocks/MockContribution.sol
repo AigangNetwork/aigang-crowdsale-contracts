@@ -28,8 +28,12 @@ contract MockContribution is Contribution {
         timeStamp = _timeStamp;
     }
 
-    function totalEthToCollect() public constant returns(uint256) {
-        return super.ethToCollect();
+    function totalWeiToCollect() public constant returns(uint256) {
+        super.weiToCollect();
+    }
+
+    function investorWeiToCollect(address investor) public constant returns(uint256) {
+        super.weiToCollect(investor);
     }
     
 }
