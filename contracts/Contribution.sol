@@ -18,6 +18,8 @@ contract Contribution is Controlled, TokenController {
   uint256 public totalWeiCollected;       // How much Wei has been collected
   uint256 public weiPreCollected;
 
+  uint256 public minimumPerTransaction = 0.01 ether;
+
   uint256 public numWhitelistedInvestors;
   mapping (address => bool) public canPurchase;
   mapping (address => uint256) public individualWeiCollected;
@@ -103,7 +105,7 @@ contract Contribution is Controlled, TokenController {
     totalWeiCollected = totalWeiCollected.add(weiPreCollected);
 
     // Exchangerate from apt to aix 1250 considering 25% bonus.
-    assert(aix.generateTokens(_exchanger, weiPreCollected.mul(1250)));
+    require(aix.generateTokens(_exchanger, weiPreCollected.mul(1250)));
 
     Initialized(initializedBlock);
   }
@@ -185,7 +187,7 @@ contract Contribution is Controlled, TokenController {
 
   function doBuy(address _th) internal {
     require(canPurchase[_th]);
-
+    require(msg.value >= minimumPerTransaction);
     uint256 toFund = msg.value;
     uint256 toCollect = weiToCollect(_th);
 
@@ -231,8 +233,8 @@ contract Contribution is Controlled, TokenController {
   function finalize() public initialized {
     require(finalizedBlock == 0);
     require(finalizedTime == 0);
-    assert(getBlockTimestamp() >= startTime);
-    assert(msg.sender == controller || getBlockTimestamp() > endTime || weiToCollect() == 0);
+    require(getBlockTimestamp() >= startTime);
+    require(msg.sender == controller || getBlockTimestamp() > endTime || weiToCollect() == 0);
 
     // remainder will be minted and locked for 1 year.
     aix.generateTokens(remainderHolder, weiToCollect().mul(1000));
