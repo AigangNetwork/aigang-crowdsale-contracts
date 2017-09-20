@@ -29,11 +29,11 @@ contract MockContribution is Contribution {
     }
 
     function totalWeiToCollect() public constant returns(uint256) {
-        super.weiToCollect();
+        return super.weiToCollect();
     }
 
     function investorWeiToCollect(address investor) public constant returns(uint256) {
-        super.weiToCollect(investor);
+        return super.weiToCollect(investor);
     }
     
 }
