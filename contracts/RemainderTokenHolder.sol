@@ -22,7 +22,7 @@ contract RemainderTokenHolder is Controlled {
     require(finalizedTime > 0 && getTime() > finalizedTime.add(1 years));
 
     uint256 balance = aix.balanceOf(address(this));
-    assert(aix.transfer(controller, balance));
+    require(aix.transfer(controller, balance));
     TokensWithdrawn(controller, balance);
   }
 
