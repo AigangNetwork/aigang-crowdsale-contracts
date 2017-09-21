@@ -22,7 +22,7 @@ contract DevTokensHolder is Controlled {
     uint256 balance = aix.balanceOf(address(this));
     uint256 total = collectedTokens.add(balance);
     // This wallet will get a 29% of the total tokens.
-    // since scaling 4 of 29 tto a percentage looks horrible (13.7931034483),
+    // since scaling 4 of 29 to a percentage looks horrible (13.7931034483),
     // I'll use a fraction.
     uint256 canExtract = total.mul(extractableFraction()).div(29);
 
@@ -33,7 +33,7 @@ contract DevTokensHolder is Controlled {
     }
 
     collectedTokens = collectedTokens.add(canExtract);
-    assert(aix.transfer(controller, canExtract));
+    require(aix.transfer(controller, canExtract));
 
     TokensWithdrawn(controller, canExtract);
   }
@@ -45,8 +45,10 @@ contract DevTokensHolder is Controlled {
     uint256 timePassed = getTime().sub(finalizedTime);
 
     if (timePassed > months(12)) {
+      // after a year the full 29% of the total Supply can be collected
       return 29;
     } else {
+      // before a year only a 4% of the total Supply can be collected
       return 4;
     }
   }

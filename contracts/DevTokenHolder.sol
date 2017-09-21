@@ -30,7 +30,7 @@ contract DevTokensHolder is Controlled {
     }
 
     collectedTokens = collectedTokens.add(canExtract);
-    assert(aix.transfer(controller, canExtract));
+    require(aix.transfer(controller, canExtract));
 
     TokensWithdrawn(controller, canExtract);
   }
