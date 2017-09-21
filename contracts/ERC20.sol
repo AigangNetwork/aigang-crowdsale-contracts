@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.15;
 
 contract ERC20 {
   /// @notice Send `_amount` tokens to `_to` from `msg.sender`
