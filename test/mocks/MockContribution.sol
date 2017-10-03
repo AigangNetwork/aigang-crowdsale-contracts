@@ -6,7 +6,7 @@ contract MockContribution is Contribution {
     uint256 public blockNumber;
     uint256 public timeStamp;
 
-    function MockContribution(address _aix) 
+    function MockContribution(address _aix)
         Contribution(_aix)
     {
     }
@@ -18,6 +18,10 @@ contract MockContribution is Contribution {
 
     function getBlockTimestamp() internal constant returns (uint256) {
         return timeStamp;
+    }
+
+    function getTimestamp() constant returns (uint256) {
+        return getBlockTimestamp();
     }
 
     function setBlockNumber(uint256 _blockNumber) public {
@@ -35,5 +39,5 @@ contract MockContribution is Contribution {
     function investorWeiToCollect(address investor) public constant returns(uint256) {
         return super.weiToCollect(investor);
     }
-    
+
 }
