@@ -104,7 +104,7 @@ contract Contribution is Controlled, TokenController {
     weiPreCollected = MiniMeToken(_apt).totalSupplyAt(initializedBlock);
 
     // Exchangerate from apt to aix 1250 considering 25% bonus.
-    require(aix.generateTokens(_exchanger, weiPreCollected.mul(1250)));
+    require(aix.generateTokens(_exchanger, weiPreCollected.mul(2500)));
 
     Initialized(initializedBlock);
   }
