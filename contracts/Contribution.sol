@@ -139,7 +139,6 @@ contract Contribution is Controlled, TokenController {
   }
 
   // ETH-AIX exchange rate
-  event Debug(uint _da, uint _x);
   function exchangeRate() constant public initialized returns (uint256 rate) {
     
     if (getBlockTimestamp() <= startTime + 1 hours) {
