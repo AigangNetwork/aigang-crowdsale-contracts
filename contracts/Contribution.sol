@@ -17,6 +17,7 @@ contract Contribution is Controlled, TokenController {
   uint256 public totalWeiCap;             // Total Wei to be collected
   uint256 public totalWeiCollected;       // How much Wei has been collected
   uint256 public weiPreCollected;
+  uint256 public notCollectedAmountAfter24Hours;
 
   uint256 public minimumPerTransaction = 0.01 ether;
 
@@ -138,15 +139,33 @@ contract Contribution is Controlled, TokenController {
   }
 
   // ETH-AIX exchange rate
+  event Debug(uint _da, uint _x);
   function exchangeRate() constant public initialized returns (uint256 rate) {
+    
     if (getBlockTimestamp() <= startTime + 1 hours) {
       // 15% Bonus
       rate = 2300;
     } else if (getBlockTimestamp() <= startTime + 2 hours) {
       // 10% Bonus
       rate = 2200;
-    } else {
+    } else if((getBlockTimestamp() > startTime + 2 hours) && (getBlockTimestamp() < startTime + 1 days)) {
       rate = 2000;
+    } else {
+      if (notCollectedAmountAfter24Hours == 0) {
+        notCollectedAmountAfter24Hours = weiToCollect();
+      }
+      uint256 twentyPercentFromSupply = notCollectedAmountAfter24Hours.mul(20).div(100);
+      uint256 thirtyPercentFromSupply = notCollectedAmountAfter24Hours.mul(30).div(100);
+      uint256 firstDayRaised = totalWeiCap.sub(notCollectedAmountAfter24Hours);
+      uint256 weiTilBonusTwentyExist = firstDayRaised.add(twentyPercentFromSupply);
+      uint256 weiTilBonusThirtyExist = firstDayRaised.add(thirtyPercentFromSupply);
+      if(totalWeiCollected <= weiTilBonusTwentyExist ) {
+        rate = 2300;
+      } else if(totalWeiCollected > weiTilBonusTwentyExist && totalWeiCollected <= weiTilBonusThirtyExist) {
+        rate = 2200;
+      } else {
+        rate = 2000;
+      }
     }
   }
 
@@ -186,6 +205,9 @@ contract Contribution is Controlled, TokenController {
     // whitelisting only during the first day
     if (getBlockTimestamp() <= startTime + 1 days) {
       require(canPurchase[_th]);
+    }
+    if (getBlockTimestamp() >= startTime + 1 days && notCollectedAmountAfter24Hours == 0) {
+      notCollectedAmountAfter24Hours = weiToCollect();
     }
     require(msg.value >= minimumPerTransaction);
     uint256 toFund = msg.value;
@@ -267,7 +289,7 @@ contract Contribution is Controlled, TokenController {
     // adding 1 day as a placeholder for X hours.
     // This should change into a variable or coded into the contract.
     if (getBlockTimestamp() <= startTime + 1 days) {
-      cap = totalWeiCap.sub(weiPreCollected).div(numWhitelistedInvestors);
+      cap = totalWeiCap.div(numWhitelistedInvestors);
       collected = individualWeiCollected[investor];
     } else {
       cap = totalWeiCap;

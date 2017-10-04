@@ -272,8 +272,8 @@ contract("Contribution", ([miner, owner]) => {
       exchanger = await Exchanger.new(apt.address, aix.address, contribution.address);
 
       multiSig = owner;
-      totalCap = new BigNumber(1000 * 10 ** 18); //1000 eth
-      sendingAmount = new BigNumber(10 ** 18); // 1 eth
+      totalCap = new BigNumber(60 * 10 ** 18); //59 eth
+      sendingAmount = new BigNumber(1 * 10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF1';
       _devHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF2';
@@ -293,7 +293,7 @@ contract("Contribution", ([miner, owner]) => {
         _communityHolder,
         totalCap,
         currentTime + 1,
-        currentTime + 10
+        currentTime + duration.weeks(1)
       );
     })
     it('calculates different discount rates based on time ', async function () {
@@ -307,6 +307,25 @@ contract("Contribution", ([miner, owner]) => {
 
       //after 2 hr.
       await contribution.setBlockTimestamp(currentTime + duration.hours(2) + duration.minutes(1));
+      exchnageRate = await contribution.exchangeRate();
+      assert.equal(exchnageRate.toNumber(), 2000); // 0% discount
+
+      await contribution.whitelistAddresses([owner]);
+
+      let totalWei = await contribution.totalWeiToCollect();
+      await contribution.sendTransaction({ from: owner, value: sendingAmount.mul(10) });
+      totalWei = await contribution.totalWeiToCollect();
+
+      await contribution.setBlockTimestamp(currentTime + duration.days(1) + duration.minutes(4));
+      await contribution.sendTransaction({ from: miner, value: sendingAmount.mul(5) });
+      exchnageRate = await contribution.exchangeRate();
+      assert.equal(exchnageRate.toNumber(), 2300); //15% discount
+
+      await contribution.sendTransaction({ from: miner, value: sendingAmount.mul(10) });      
+      exchnageRate = await contribution.exchangeRate();
+      assert.equal(exchnageRate.toNumber(), 2200); //10% discount
+
+      await contribution.sendTransaction({ from: owner, value: sendingAmount.mul(0.1) });        
       exchnageRate = await contribution.exchangeRate();
       assert.equal(exchnageRate.toNumber(), 2000); // 0% discount
     });
