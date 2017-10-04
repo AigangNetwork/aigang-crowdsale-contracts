@@ -8,7 +8,7 @@ const assert = require("chai").assert;
 const BigNumber = web3.BigNumber;
 import { expectThrow, duration, latestBlock, getTime } from "./utils.js";
 
-contract("Holder", ([miner, owner, dev, community, remainder]) => {
+contract("Contribution", ([miner, owner, dev, community, remainder]) => {
   let tokenFactory;
   let aix;
   let contribution;
@@ -52,7 +52,8 @@ contract("Holder", ([miner, owner, dev, community, remainder]) => {
       _devHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF2";
       _communityHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF3";
 
-      latestBlockNumber = latestBlock();
+      latestBlockNumber = await latestBlock();
+
       await contribution.setBlockTimestamp(currentTime);
       await contribution.setBlockNumber(latestBlockNumber);
 
@@ -70,11 +71,10 @@ contract("Holder", ([miner, owner, dev, community, remainder]) => {
         currentTime + 10
       );
 
-
       currentTime = getTime();
-      latestBlockNumber = latestBlock();
-      await contribution.setBlockTimestamp(currentTime+1);
-      await contribution.setBlockNumber(latestBlockNumber+1);
+      latestBlockNumber = await latestBlock();
+      await contribution.setBlockTimestamp(currentTime);
+      await contribution.setBlockNumber(latestBlockNumber);
       await contribution.finalize();
       await contribution.allowTransfers(true);
     });
@@ -89,37 +89,37 @@ contract("Holder", ([miner, owner, dev, community, remainder]) => {
       const totalSupplyAfterContribution = await aix.totalSupply();
       // exchange rate = 1000
       // Unsold Wei = 5 * 10 ** 18
-      assert.equal(remainderHolderBalance.toString(10), new BigNumber(5 * 10 ** 18 * 2000).toString(10));
-      assert.equal(preSoldBalance.toString(10), new BigNumber(50 * 10 ** 18 * 2500).toString(10));
+      assert.equal(remainderHolderBalance.toNumber(), 5 * 10 ** 18 * 1000);
+      assert.equal(preSoldBalance.toNumber(), 50 * 10 ** 18 * 1250);
       assert.equal(
         devHolderBalance.toNumber(),
-        (5 * 2000 + 50 * 2500) * Math.pow(10, 18) / 51 * 20
+        (5 * 1000 + 50 * 1250) * 10 ** 18 / 51 * 20
       );
       assert.equal(
         communityHolderBalance.toNumber(),
-        (5 * 2000 + 50 * 2500) * 10 ** 18 / 51 * 29
+        (5 * 1000 + 50 * 1250) * 10 ** 18 / 51 * 29
       );
       assert.equal(
         totalSupplyAfterContribution.toNumber(),
-        (5 * 2000 + 50 * 2500) * 10 ** 18 / 51 * 100
+        (5 * 1000 + 50 * 1250) * 10 ** 18 / 51 * 100
       );
     });
 
     it("Final Values", async function() {
       let communityBalance = await aix.balanceOf(remainder);
-      assert.equal(communityBalance.toString(10), 0);
+      assert.equal(communityBalance.toNumber(), 0);
 
       currentTime = await getTime();
       await expectThrow(remainderHolder.collectTokens({ from: remainder }));
       communityBalance = await aix.balanceOf(remainder);
-      assert.equal(communityBalance.toString(10), 0);
+      assert.equal(communityBalance.toNumber(), 0);
 
       await remainderHolder.setBlockTimestamp(
         currentTime + duration.years(1) + duration.days(1)
       );
       await remainderHolder.collectTokens({ from: remainder });
       communityBalance = await aix.balanceOf(remainder);
-      assert.equal(communityBalance.toString(10),  new BigNumber(5 * 10 ** 18 * 2000).toString(10));
+      assert.equal(communityBalance.toNumber(), 5 * 10 ** 18 * 1000);
     });
   });
 });
