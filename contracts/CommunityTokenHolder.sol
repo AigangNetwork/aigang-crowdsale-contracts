@@ -48,8 +48,8 @@ contract DevTokensHolder is Controlled {
       // after a year the full 29% of the total Supply can be collected
       return 29;
     } else {
-      // before a year only a 4% of the total Supply can be collected
-      return 4;
+      // before a year only a 5% of the total Supply can be collected
+      return 5;
     }
   }
 

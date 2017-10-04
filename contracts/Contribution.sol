@@ -102,7 +102,6 @@ contract Contribution is Controlled, TokenController {
     require(_exchanger != 0x0);
 
     weiPreCollected = MiniMeToken(_apt).totalSupplyAt(initializedBlock);
-    totalWeiCollected = totalWeiCollected.add(weiPreCollected);
 
     // Exchangerate from apt to aix 1250 considering 25% bonus.
     require(aix.generateTokens(_exchanger, weiPreCollected.mul(1250)));
@@ -141,15 +140,13 @@ contract Contribution is Controlled, TokenController {
   // ETH-AIX exchange rate
   function exchangeRate() constant public initialized returns (uint256 rate) {
     if (getBlockTimestamp() <= startTime + 1 hours) {
-      // 12% discount
-      // 0.88 ETH ≈ 1000 AIX
-      rate = 1136;
+      // 15% Bonus
+      rate = 2300;
     } else if (getBlockTimestamp() <= startTime + 2 hours) {
-      // 6% discount
-      // 0.94 ETH ≈ 1000 AIX
-      rate = 1064;
+      // 10% Bonus
+      rate = 2200;
     } else {
-      rate = 1000;
+      rate = 2000;
     }
   }
 
@@ -186,7 +183,10 @@ contract Contribution is Controlled, TokenController {
   }
 
   function doBuy(address _th) internal {
-    require(canPurchase[_th]);
+    // whitelisting only during the first day
+    if (getBlockTimestamp() <= startTime + 1 days) {
+      require(canPurchase[_th]);
+    }
     require(msg.value >= minimumPerTransaction);
     uint256 toFund = msg.value;
     uint256 toCollect = weiToCollect(_th);
@@ -237,7 +237,7 @@ contract Contribution is Controlled, TokenController {
     require(msg.sender == controller || getBlockTimestamp() > endTime || weiToCollect() == 0);
 
     // remainder will be minted and locked for 1 year.
-    aix.generateTokens(remainderHolder, weiToCollect().mul(1000));
+    aix.generateTokens(remainderHolder, weiToCollect().mul(2000));
     // AIX generated so far is 51% of total
     uint256 tokenCap = aix.totalSupply().mul(100).div(51);
     // dev Wallet will have 20% of the total Tokens and will be able to retrieve quarterly.
