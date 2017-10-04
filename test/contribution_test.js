@@ -126,11 +126,11 @@ contract("Contribution", ([miner, owner]) => {
 
       const exchangerBalance = await aix.balanceOf(exchanger.address);
       const totalSupplyAt = await apt.totalSupplyAt(latestBlockNumber);
-      assert.equal(exchangerBalance.toString(10), totalSupplyAt.mul(1250).toString(10));
+      assert.equal(exchangerBalance.toString(10), totalSupplyAt.mul(2500).toString(10));
 
       assert.equal(contributionWallet, multiSig);
       assert.equal(totalSupplyCap.toNumber(), totalCap);
-      assert.equal(totalSold.toString(10), tokensPreSold.toString(10));
+      assert.equal(totalSold.toString(10), 0);
       assert.equal(startTime.toNumber(), currentTime + 1);
       assert.equal(endTime.toNumber(), currentTime + 10);
       assert.equal(initializedTime.toNumber(), currentTime);
@@ -141,7 +141,7 @@ contract("Contribution", ([miner, owner]) => {
       assert.equal(paused, false);
       assert.equal(minimumPerTransaction.toString(), web3.toWei(0.01, 'ether'));
     });
-    it('throws when you try to dobule initialize', async function () {
+    it('throws when you try to double initialize', async function () {
       await aix.changeController(contribution.address);
       await contribution.initialize(
         apt.address,
@@ -299,15 +299,16 @@ contract("Contribution", ([miner, owner]) => {
     it('calculates different discount rates based on time ', async function () {
       //first hour
       let exchnageRate = await contribution.exchangeRate();
-      assert.equal(exchnageRate.toNumber(), 1136); //12% discount. 0.88eth ~1000 aix
+      assert.equal(exchnageRate.toNumber(), 2300); //15% discount
       // second hour
-      await contribution.setBlockTimestamp(currentTime + duration.hours(2));
+      await contribution.setBlockTimestamp(currentTime + duration.hours(1.1));
       exchnageRate = await contribution.exchangeRate();
+      assert.equal(exchnageRate.toNumber(), 2200); //10% discount
 
       //after 2 hr.
       await contribution.setBlockTimestamp(currentTime + duration.hours(2) + duration.minutes(1));
       exchnageRate = await contribution.exchangeRate();
-      assert.equal(exchnageRate.toNumber(), 1000); // 6% discount
+      assert.equal(exchnageRate.toNumber(), 2000); // 0% discount
     });
   })
 
@@ -356,13 +357,13 @@ contract("Contribution", ([miner, owner]) => {
       await contribution.sendTransaction({ from: miner, value: sendingAmount.mul(2) });
       const individualWeiCollected = await contribution.individualWeiCollected(owner);
       let totalWeiCollected = await contribution.totalWeiCollected();
-      const newtotal = sendingAmount.mul(4).add(sendingAmount.mul(2)).add(tokensPreSold);
+      const newtotal = sendingAmount.mul(4).add(sendingAmount.mul(2));
       assert.equal(totalWeiCollected.toString(10), newtotal.toString(10));
       assert.equal(individualWeiCollected.toString(10), sendingAmount.mul(4).toString(10));
       const balanceOfOwner = await aix.balanceOf(owner);
       const balanceOfMiner = await aix.balanceOf(miner);
-      assert.equal(balanceOfOwner.toNumber(), sendingAmount.mul(4).mul(1136));
-      assert.equal(balanceOfMiner.toNumber(), sendingAmount.mul(2).mul(1136));
+      assert.equal(balanceOfOwner.toString(10), sendingAmount.mul(4).mul(2300).toString(10));
+      assert.equal(balanceOfMiner.toString(10), sendingAmount.mul(2).mul(2300).toString(10));
     });
 
     it('throws when below sendingAmount', async function () {
@@ -381,7 +382,7 @@ contract("Contribution", ([miner, owner]) => {
       await contribution.whitelist(owner);
       await contribution.sendTransaction({ from: owner, value: minPerTx });
       const balanceOfOwner = await aix.balanceOf(owner);
-      assert.equal(balanceOfOwner.toNumber(), new BigNumber(minPerTx).mul(1136).toString(10));
+      assert.equal(balanceOfOwner.toNumber(), new BigNumber(minPerTx).mul(2300).toString(10));
     });
 
     it('allows multisig to buy tokens', async function () {
@@ -394,19 +395,17 @@ contract("Contribution", ([miner, owner]) => {
       await contribution.whitelistAddresses([multiSig.address]);
 
       let totalWeiCollected = await contribution.totalWeiCollected();
-      assert.equal(tokensPreSold.toString(10), totalWeiCollected.toString(10));
+      assert.equal(0, totalWeiCollected.toString(10));
 
       const amountToSendFromMultiSig = new BigNumber(10 ** 18 * 0.5);
       await multiSig.submitTransaction(contribution.address, amountToSendFromMultiSig, '0x0');
       const individualWeiCollected = await contribution.individualWeiCollected(multiSig.address);
       totalWeiCollected = await contribution.totalWeiCollected();
 
-      const newtotal = amountToSendFromMultiSig.add(tokensPreSold);
-
-      assert.equal(totalWeiCollected.toString(10), newtotal.toString(10), 'totalWeiCollected is incorrect');
+      assert.equal(totalWeiCollected.toString(10), amountToSendFromMultiSig.toString(10), 'totalWeiCollected is incorrect');
 
       const balanceOf = await aix.balanceOf(multiSig.address);
-      assert.equal(balanceOf.toString(10), amountToSendFromMultiSig.mul(1136).toString(10));
+      assert.equal(balanceOf.toString(10), amountToSendFromMultiSig.mul(2300).toString(10));
 
     })
     it('contribution wallet should receive funds', async function () {
@@ -439,7 +438,7 @@ contract("Contribution", ([miner, owner]) => {
       await contribution.setBlockNumber(latestBlockNumber + 10);
       await contribution.whitelistAddresses([owner]);
       let investorWeiToCollect =  await contribution.investorWeiToCollect(owner);
-      assert.equal(investorWeiToCollect.toString(10), totalCap.sub(tokensPreSold).toString(10));
+      assert.equal(investorWeiToCollect.toString(10), totalCap.toString(10));
       
       const txReceipt = await contribution.sendTransaction({ from: owner, value: totalCap.mul(2), gasPrice: '1', gas: gasLimit });
       const totalWeiCap = await contribution.totalWeiCap();
@@ -448,7 +447,7 @@ contract("Contribution", ([miner, owner]) => {
 
       ownerBalance = await web3.eth.getBalance(owner);
       
-      const totalCapMinusExpenses = totalCap.add(tokensPreSold).add(gasLimit).sub(txReceipt.receipt.gasUsed).toString(10);
+      const totalCapMinusExpenses = totalCap.add(gasLimit).sub(txReceipt.receipt.gasUsed).toString(10);
       assert.equal(ownerBalance.toString(10), totalCapMinusExpenses);
       assert.equal(totalWeiToCollect.toString(10), 0);
     })
