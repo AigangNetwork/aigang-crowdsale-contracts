@@ -543,10 +543,7 @@ contract("Contribution", ([miner, owner]) => {
       await contribution.setBlockNumber(latestBlockNumber + 10);
       await contribution.whitelistAddresses([owner]);
       let investorWeiToCollect = await contribution.investorWeiToCollect(owner);
-      assert.equal(
-        investorWeiToCollect.toString(10),
-        totalCap.sub(tokensPreSold).toString(10)
-      );
+      assert.equal(investorWeiToCollect.toString(10), totalCap.toString(10));
 
       const txReceipt = await contribution.sendTransaction({
         from: owner,
@@ -561,7 +558,6 @@ contract("Contribution", ([miner, owner]) => {
       ownerBalance = await web3.eth.getBalance(owner);
 
       const totalCapMinusExpenses = totalCap
-        .add(tokensPreSold)
         .add(gasLimit)
         .sub(txReceipt.receipt.gasUsed)
         .toString(10);
