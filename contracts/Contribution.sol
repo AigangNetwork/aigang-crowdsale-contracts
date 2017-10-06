@@ -154,7 +154,7 @@ contract Contribution is Controlled, TokenController {
     }
   }
 
-  function tokensToGenerate(uint256 toFund) constant public initialized returns (uint256) {
+  function tokensToGenerate(uint256 toFund) internal returns (uint256) {
     if (getBlockTimestamp() < startTime + 1 days) {
       return toFund.mul(exchangeRate());
     }

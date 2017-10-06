@@ -324,6 +324,9 @@ contract("Contribution", ([miner, owner]) => {
         currentTime + duration.days(2) + duration.minutes(4)
       );
       let toFund = await contribution.weiToCollect();
+
+      // invest 10% of total
+      // Should get 15% bonus
       await contribution.sendTransaction({
         from: owner,
         value: toFund.toNumber() * 10 / 100
@@ -336,6 +339,10 @@ contract("Contribution", ([miner, owner]) => {
           .div(100)
           .toNumber()
       );
+
+      // invest 15% of total
+      // Should get 15% bonus on the first 10%
+      //        get 10% bonus on the last 5%
       await contribution.sendTransaction({
         from: owner,
         value: toFund.toNumber() * 15 / 100
@@ -349,6 +356,10 @@ contract("Contribution", ([miner, owner]) => {
           .div(100)
           .toNumber()
       );
+
+      // invest 15% of total
+      // Should get 10% bonus on the first 5%
+      //        get no bonus on the last 10%
       await contribution.sendTransaction({
         from: owner,
         value: toFund.toNumber() * 15 / 100
@@ -362,9 +373,13 @@ contract("Contribution", ([miner, owner]) => {
           .div(100)
           .toNumber()
       );
+
+      // invest 70% of total
+      // Should get no bonus on the first 60%
+      //        get 10% returned
       await contribution.sendTransaction({
         from: owner,
-        value: toFund.toNumber() * 60 / 100
+        value: toFund.toNumber() * 70 / 100
       });
 
       raised = await aix.balanceOf(owner);
