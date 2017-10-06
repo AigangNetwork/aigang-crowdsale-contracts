@@ -317,32 +317,64 @@ contract("Contribution", ([miner, owner]) => {
         value: sendingAmount.mul(10)
       });
       totalWei = await contribution.totalWeiToCollect();
+    });
 
-      // TODO: the bonus after th 24 hours is not calculated by exchangeRate
-      // I'll write a test for this tonight
-      // await contribution.setBlockTimestamp(
-      //   currentTime + duration.days(1) + duration.minutes(4)
-      // );
-      // await contribution.sendTransaction({
-      //   from: miner,
-      //   value: sendingAmount.mul(5)
-      // });
-      // exchnageRate = await contribution.exchangeRate();
-      // assert.equal(exchnageRate.toNumber(), 2300); //15% bonus
-      //
-      // await contribution.sendTransaction({
-      //   from: miner,
-      //   value: sendingAmount.mul(10)
-      // });
-      // exchnageRate = await contribution.exchangeRate();
-      // assert.equal(exchnageRate.toNumber(), 2200); //10% discount
-      //
-      // await contribution.sendTransaction({
-      //   from: owner,
-      //   value: sendingAmount.mul(0.1)
-      // });
-      // exchnageRate = await contribution.exchangeRate();
-      // assert.equal(exchnageRate.toNumber(), 2000); // 0% discount
+    it("calculates different bonuses based on percentage", async function() {
+      await contribution.setBlockTimestamp(
+        currentTime + duration.days(2) + duration.minutes(4)
+      );
+      let toFund = await contribution.weiToCollect();
+      await contribution.sendTransaction({
+        from: owner,
+        value: toFund.toNumber() * 10 / 100
+      });
+      let raised = await aix.balanceOf(owner);
+      assert.equal(
+        raised.toNumber(),
+        toFund
+          .mul(10 * 2300)
+          .div(100)
+          .toNumber()
+      );
+      await contribution.sendTransaction({
+        from: owner,
+        value: toFund.toNumber() * 15 / 100
+      });
+
+      raised = await aix.balanceOf(owner);
+      assert.equal(
+        raised.toNumber(),
+        toFund
+          .mul(5 * 2200 + 20 * 2300)
+          .div(100)
+          .toNumber()
+      );
+      await contribution.sendTransaction({
+        from: owner,
+        value: toFund.toNumber() * 15 / 100
+      });
+
+      raised = await aix.balanceOf(owner);
+      assert.equal(
+        raised.toNumber(),
+        toFund
+          .mul(10 * 2000 + 10 * 2200 + 20 * 2300)
+          .div(100)
+          .toNumber()
+      );
+      await contribution.sendTransaction({
+        from: owner,
+        value: toFund.toNumber() * 60 / 100
+      });
+
+      raised = await aix.balanceOf(owner);
+      assert.equal(
+        raised.toNumber(),
+        toFund
+          .mul(70 * 2000 + 10 * 2200 + 20 * 2300)
+          .div(100)
+          .toNumber()
+      );
     });
   });
 

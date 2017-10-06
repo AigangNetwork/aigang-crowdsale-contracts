@@ -177,7 +177,7 @@ contract Contribution is Controlled, TokenController {
     // We generate the tokens over the remaining 20% with bonus.
     if (toFund >= twentyPercentWithBonus) {
       uint256 overTwentyPercent = toFund.sub(twentyPercentWithBonus);
-      toGenerate = toGenerate.add(overThirtyPercent.mul(2200));
+      toGenerate = toGenerate.add(overTwentyPercent.mul(2200));
       toFund = toFund.sub(overTwentyPercent);
       thirtyPercentWithBonus = thirtyPercentWithBonus.sub(overTwentyPercent);
     }
@@ -224,9 +224,6 @@ contract Contribution is Controlled, TokenController {
     // whitelisting only during the first day
     if (getBlockTimestamp() <= startTime + 1 days) {
       require(canPurchase[_th]);
-    }
-    if (getBlockTimestamp() >= startTime + 1 days && notCollectedAmountAfter24Hours == 0) {
-      notCollectedAmountAfter24Hours = weiToCollect();
     }
     require(msg.value >= minimumPerTransaction);
     uint256 toFund = msg.value;
