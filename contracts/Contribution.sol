@@ -18,6 +18,8 @@ contract Contribution is Controlled, TokenController {
   uint256 public totalWeiCollected;       // How much Wei has been collected
   uint256 public weiPreCollected;
   uint256 public notCollectedAmountAfter24Hours;
+  uint256 public twentyPercentWithBonus;
+  uint256 public thirtyPercentWithBonus;
 
   uint256 public minimumPerTransaction = 0.01 ether;
 
@@ -104,7 +106,7 @@ contract Contribution is Controlled, TokenController {
 
     weiPreCollected = MiniMeToken(_apt).totalSupplyAt(initializedBlock);
 
-    // Exchangerate from apt to aix 1250 considering 25% bonus.
+    // Exchangerate from apt to aix 2500 considering 25% bonus.
     require(aix.generateTokens(_exchanger, weiPreCollected.mul(2500)));
 
     Initialized(initializedBlock);
@@ -140,32 +142,50 @@ contract Contribution is Controlled, TokenController {
 
   // ETH-AIX exchange rate
   function exchangeRate() constant public initialized returns (uint256 rate) {
-    
+
     if (getBlockTimestamp() <= startTime + 1 hours) {
       // 15% Bonus
       rate = 2300;
     } else if (getBlockTimestamp() <= startTime + 2 hours) {
       // 10% Bonus
       rate = 2200;
-    } else if((getBlockTimestamp() > startTime + 2 hours) && (getBlockTimestamp() < startTime + 1 days)) {
-      rate = 2000;
     } else {
-      if (notCollectedAmountAfter24Hours == 0) {
-        notCollectedAmountAfter24Hours = weiToCollect();
-      }
-      uint256 twentyPercentFromSupply = notCollectedAmountAfter24Hours.mul(20).div(100);
-      uint256 thirtyPercentFromSupply = notCollectedAmountAfter24Hours.mul(30).div(100);
-      uint256 firstDayRaised = totalWeiCap.sub(notCollectedAmountAfter24Hours);
-      uint256 weiTilBonusTwentyExist = firstDayRaised.add(twentyPercentFromSupply);
-      uint256 weiTilBonusThirtyExist = firstDayRaised.add(thirtyPercentFromSupply);
-      if(totalWeiCollected <= weiTilBonusTwentyExist ) {
-        rate = 2300;
-      } else if(totalWeiCollected > weiTilBonusTwentyExist && totalWeiCollected <= weiTilBonusThirtyExist) {
-        rate = 2200;
-      } else {
-        rate = 2000;
-      }
+      rate = 2000;
     }
+  }
+
+  function tokensToGenerate(uint256 toFund) internal returns (uint256) {
+    if (getBlockTimestamp() < startTime + 1 days) {
+      return toFund.mul(exchangeRate());
+    }
+
+    if (notCollectedAmountAfter24Hours == 0) {
+      notCollectedAmountAfter24Hours = weiToCollect();
+      twentyPercentWithBonus = notCollectedAmountAfter24Hours.mul(20).div(100);
+      thirtyPercentWithBonus = notCollectedAmountAfter24Hours.mul(30).div(100);
+    }
+
+    uint256 toGenerate = 0;
+
+    // We start by generating the tokens over the remaining 30% without bonus.
+    if (toFund >= thirtyPercentWithBonus) {
+      uint256 overThirtyPercent = toFund.sub(thirtyPercentWithBonus);
+      toGenerate = toGenerate.add(overThirtyPercent.mul(2000));
+      toFund = toFund.sub(overThirtyPercent);
+    }
+
+    // We generate the tokens over the remaining 20% with bonus.
+    if (toFund >= twentyPercentWithBonus) {
+      uint256 overTwentyPercent = toFund.sub(twentyPercentWithBonus);
+      toGenerate = toGenerate.add(overTwentyPercent.mul(2200));
+      toFund = toFund.sub(overTwentyPercent);
+      thirtyPercentWithBonus = thirtyPercentWithBonus.sub(overTwentyPercent);
+    }
+
+    toGenerate = toGenerate.add(toFund.mul(2300));
+    twentyPercentWithBonus = twentyPercentWithBonus.sub(toFund);
+    thirtyPercentWithBonus = thirtyPercentWithBonus.sub(toFund);
+    return toGenerate;
   }
 
   /// @notice If anybody sends Ether directly to this contract, consider he is
@@ -205,9 +225,6 @@ contract Contribution is Controlled, TokenController {
     if (getBlockTimestamp() <= startTime + 1 days) {
       require(canPurchase[_th]);
     }
-    if (getBlockTimestamp() >= startTime + 1 days && notCollectedAmountAfter24Hours == 0) {
-      notCollectedAmountAfter24Hours = weiToCollect();
-    }
     require(msg.value >= minimumPerTransaction);
     uint256 toFund = msg.value;
     uint256 toCollect = weiToCollect(_th);
@@ -217,7 +234,7 @@ contract Contribution is Controlled, TokenController {
       if (toFund > toCollect) {
         toFund = toCollect;
       }
-      uint256 tokensGenerated = toFund.mul(exchangeRate());
+      uint256 tokensGenerated = tokensToGenerate(toFund);
       require(tokensGenerated > 0);
       require(aix.generateTokens(_th, tokensGenerated));
 
@@ -309,8 +326,6 @@ contract Contribution is Controlled, TokenController {
   function getBlockTimestamp() internal constant returns (uint256) {
     return block.timestamp;
   }
-
-
 
   //////////
   // Safety Methods

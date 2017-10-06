@@ -5,31 +5,7 @@ const MiniMeTokenFactory = artifacts.require("MiniMeTokenFactory");
 const Exchanger = artifacts.require("Exchanger");
 const assert = require("chai").assert;
 const BigNumber = web3.BigNumber;
-import { expectThrow } from './utils.js';
-
-function getTime() {
-  return web3.eth.getBlock('latest').timestamp;
-}
-
-const duration = {
-  seconds: function (val) { return val },
-  minutes: function (val) { return val * this.seconds(60) },
-  hours: function (val) { return val * this.minutes(60) },
-  days: function (val) { return val * this.hours(24) },
-  weeks: function (val) { return val * this.days(7) },
-  years: function (val) { return val * this.days(365) }
-};
-
-async function latestBlock() {
-  return new Promise((resolve, reject) => {
-    web3.eth.getBlockNumber((error, number) => {
-      if (error) {
-        reject(error);
-      }
-      resolve(number);
-    });
-  })
-}
+import { expectThrow, duration, latestBlock, getTime } from "./utils.js";
 
 contract("Contribution", ([miner, owner]) => {
   let aix;
@@ -45,7 +21,8 @@ contract("Contribution", ([miner, owner]) => {
   let _devHolder;
   let _communityHolder;
   let latestBlockNumber;
-  let addresses = ["0xD7dFCEECe5bb82F397f4A9FD7fC642b2efB1F565",
+  let addresses = [
+    "0xD7dFCEECe5bb82F397f4A9FD7fC642b2efB1F565",
     "0x501AC3B461e7517D07dCB5492679Cc7521AadD42",
     "0xDc76C949100FbC502212c6AA416195Be30CE0732",
     "0x2C49e8184e468F7f8Fb18F0f29f380CD616eaaeb",
@@ -56,9 +33,10 @@ contract("Contribution", ([miner, owner]) => {
     "0x086282022b8D0987A30CdD508dBB3236491F132e",
     "0xdd39B760748C1CA92133FD7Fc5448F3e6413C138",
     "0x0868411cA03e6655d7eE957089dc983d74b9Bf1A",
-    "0x4Ec993E1d6980d7471Ca26BcA67dE6C513165922"];
+    "0x4Ec993E1d6980d7471Ca26BcA67dE6C513165922"
+  ];
 
-  it("#constructor accepts MiniMe instance", async function () {
+  it("#constructor accepts MiniMe instance", async function() {
     const contribution = await MockContribution.new(
       "0x0000000000000000000000000000000000000123"
     );
@@ -69,32 +47,35 @@ contract("Contribution", ([miner, owner]) => {
       "== token address"
     );
   });
-  describe("#initialize", async function () {
-    beforeEach(async function () {
+  describe("#initialize", async function() {
+    beforeEach(async function() {
       const tokenFactory = await MiniMeTokenFactory.new();
       const tokenFactoryAPT = await MiniMeTokenFactory.new();
       apt = await APT.new(tokenFactoryAPT.address);
       await apt.generateTokens(owner, tokensPreSold);
       aix = await AIX.new(tokenFactory.address);
       contribution = await MockContribution.new(aix.address);
-      exchanger = await Exchanger.new(apt.address, aix.address, contribution.address);
+      exchanger = await Exchanger.new(
+        apt.address,
+        aix.address,
+        contribution.address
+      );
 
       multiSig = owner;
       totalCap = new BigNumber(1000 * 10 ** 18); //1000 eth
       sendingAmount = new BigNumber(10 ** 18); // 1 eth
       currentTime = getTime();
-      _remainderHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF1';
-      _devHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF2';
-      _communityHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF3';
+      _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
+      _devHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF2";
+      _communityHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF3";
 
       latestBlockNumber = await latestBlock();
 
       await contribution.setBlockTimestamp(currentTime);
       await contribution.setBlockNumber(latestBlockNumber);
-
     });
 
-    it("happy path", async function () {
+    it("happy path", async function() {
       await aix.changeController(contribution.address);
 
       await contribution.initialize(
@@ -126,11 +107,14 @@ contract("Contribution", ([miner, owner]) => {
 
       const exchangerBalance = await aix.balanceOf(exchanger.address);
       const totalSupplyAt = await apt.totalSupplyAt(latestBlockNumber);
-      assert.equal(exchangerBalance.toString(10), totalSupplyAt.mul(2500).toString(10));
+      assert.equal(
+        exchangerBalance.toString(10),
+        totalSupplyAt.mul(2500).toString(10)
+      );
 
       assert.equal(contributionWallet, multiSig);
       assert.equal(totalSupplyCap.toNumber(), totalCap);
-      assert.equal(totalSold.toString(10), 0);
+      assert.equal(totalSold.toString(10), "0");
       assert.equal(startTime.toNumber(), currentTime + 1);
       assert.equal(endTime.toNumber(), currentTime + 10);
       assert.equal(initializedTime.toNumber(), currentTime);
@@ -139,9 +123,9 @@ contract("Contribution", ([miner, owner]) => {
       assert.equal(finalizedBlock.toNumber(), 0);
       assert.equal(transferable, false);
       assert.equal(paused, false);
-      assert.equal(minimumPerTransaction.toString(), web3.toWei(0.01, 'ether'));
+      assert.equal(minimumPerTransaction.toString(), web3.toWei(0.01, "ether"));
     });
-    it('throws when you try to double initialize', async function () {
+    it("throws when you try to dobule initialize", async function() {
       await aix.changeController(contribution.address);
       await contribution.initialize(
         apt.address,
@@ -160,95 +144,104 @@ contract("Contribution", ([miner, owner]) => {
       await contribution.setBlockTimestamp(currentTime + 10);
       await contribution.setBlockNumber(latestBlockNumber + 10);
 
-      await expectThrow(contribution.initialize(
-        apt.address,
-        exchanger.address,
-        multiSig,
-        _remainderHolder,
-        _devHolder,
-        _communityHolder,
-        totalCap,
-        currentTime + 1,
-        currentTime + 10
-      ));
+      await expectThrow(
+        contribution.initialize(
+          apt.address,
+          exchanger.address,
+          multiSig,
+          _remainderHolder,
+          _devHolder,
+          _communityHolder,
+          totalCap,
+          currentTime + 1,
+          currentTime + 10
+        )
+      );
       assert.equal(initializedTime.toNumber(), currentTime);
       assert.equal(initializedBlock.toNumber(), latestBlockNumber);
-    })
-    it('throws when controller of aix is not contribution', async function () {
-      await expectThrow(contribution.initialize(
-        apt.address,
-        exchanger.address,
-        multiSig,
-        _remainderHolder,
-        _devHolder,
-        _communityHolder,
-        totalCap,
-        currentTime + 1,
-        currentTime + 10
-      ));
+    });
+    it("throws when controller of aix is not contribution", async function() {
+      await expectThrow(
+        contribution.initialize(
+          apt.address,
+          exchanger.address,
+          multiSig,
+          _remainderHolder,
+          _devHolder,
+          _communityHolder,
+          totalCap,
+          currentTime + 1,
+          currentTime + 10
+        )
+      );
       const initializedTime = await contribution.initializedTime();
       const initializedBlock = await contribution.initializedBlock();
       assert.equal(initializedTime.toNumber(), 0);
       assert.equal(initializedBlock.toNumber(), 0);
+    });
+    it("throws startTime is less then currentTime", async function() {
+      await aix.changeController(contribution.address);
+      await expectThrow(
+        contribution.initialize(
+          apt.address,
+          exchanger.address,
+          multiSig,
+          _remainderHolder,
+          _devHolder,
+          _communityHolder,
+          totalCap,
+          currentTime - 1,
+          currentTime + 10
+        )
+      );
+      const initializedTime = await contribution.initializedTime();
+      const initializedBlock = await contribution.initializedBlock();
+      assert.equal(initializedTime.toNumber(), 0);
+      assert.equal(initializedBlock.toNumber(), 0);
+    });
+    it("throws totalWeiCap is 0", async function() {
+      await aix.changeController(contribution.address);
+      await expectThrow(
+        contribution.initialize(
+          apt.address,
+          exchanger.address,
+          multiSig,
+          _remainderHolder,
+          _devHolder,
+          _communityHolder,
+          0,
+          currentTime + 1,
+          currentTime + 10
+        )
+      );
+      const initializedTime = await contribution.initializedTime();
+      const initializedBlock = await contribution.initializedBlock();
+      assert.equal(initializedTime.toNumber(), 0);
+      assert.equal(initializedBlock.toNumber(), 0);
+    });
+    it("throws when startTime > endTime", async function() {
+      await aix.changeController(contribution.address);
+      await expectThrow(
+        contribution.initialize(
+          apt.address,
+          exchanger.address,
+          multiSig,
+          _remainderHolder,
+          _devHolder,
+          _communityHolder,
+          totalCap,
+          currentTime + 11,
+          currentTime + 1
+        )
+      );
+      const initializedTime = await contribution.initializedTime();
+      const initializedBlock = await contribution.initializedBlock();
+      assert.equal(initializedTime.toNumber(), 0);
+      assert.equal(initializedBlock.toNumber(), 0);
+    });
 
-    })
-    it('throws startTime is less then currentTime', async function () {
-      await aix.changeController(contribution.address);
-      await expectThrow(contribution.initialize(
-        apt.address,
-        exchanger.address,
-        multiSig,
-        _remainderHolder,
-        _devHolder,
-        _communityHolder,
-        totalCap,
-        currentTime - 1,
-        currentTime + 10
-      ));
-      const initializedTime = await contribution.initializedTime();
-      const initializedBlock = await contribution.initializedBlock();
-      assert.equal(initializedTime.toNumber(), 0);
-      assert.equal(initializedBlock.toNumber(), 0);
-    })
-    it('throws totalWeiCap is 0', async function () {
-      await aix.changeController(contribution.address);
-      await expectThrow(contribution.initialize(
-        apt.address,
-        exchanger.address,
-        multiSig,
-        _remainderHolder,
-        _devHolder,
-        _communityHolder,
-        0,
-        currentTime + 1,
-        currentTime + 10
-      ));
-      const initializedTime = await contribution.initializedTime();
-      const initializedBlock = await contribution.initializedBlock();
-      assert.equal(initializedTime.toNumber(), 0);
-      assert.equal(initializedBlock.toNumber(), 0);
-    })
-    it('throws when startTime > endTime', async function () {
-      await aix.changeController(contribution.address);
-      await expectThrow(contribution.initialize(
-        apt.address,
-        exchanger.address,
-        multiSig,
-        _remainderHolder,
-        _devHolder,
-        _communityHolder,
-        totalCap,
-        currentTime + 11,
-        currentTime + 1
-      ));
-      const initializedTime = await contribution.initializedTime();
-      const initializedBlock = await contribution.initializedBlock();
-      assert.equal(initializedTime.toNumber(), 0);
-      assert.equal(initializedBlock.toNumber(), 0);
-    })
-
-    it("White and blacklisting investors", async function () {
-      let investor = '0x0000000000000000000000000000000000000123';
+    it("White and blacklisting investors", async function() {
+      let investor = "0x0000000000000000000000000000000000000123";
       assert.isFalse(await contribution.canPurchase(investor));
       assert.equal(await contribution.numWhitelistedInvestors(), 0);
 
@@ -261,23 +254,27 @@ contract("Contribution", ([miner, owner]) => {
       assert.equal(await contribution.numWhitelistedInvestors(), 0);
     });
   });
-  describe('#exchangeRate', async function () {
-    beforeEach(async function () {
+  describe("#exchangeRate", async function() {
+    beforeEach(async function() {
       const tokenFactory = await MiniMeTokenFactory.new();
       const tokenFactoryAPT = await MiniMeTokenFactory.new();
       apt = await APT.new(tokenFactoryAPT.address);
       await apt.generateTokens(owner, tokensPreSold);
       aix = await AIX.new(tokenFactory.address);
       contribution = await MockContribution.new(aix.address);
-      exchanger = await Exchanger.new(apt.address, aix.address, contribution.address);
+      exchanger = await Exchanger.new(
+        apt.address,
+        aix.address,
+        contribution.address
+      );
 
       multiSig = owner;
       totalCap = new BigNumber(60 * 10 ** 18); //59 eth
       sendingAmount = new BigNumber(1 * 10 ** 18); // 1 eth
       currentTime = getTime();
-      _remainderHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF1';
-      _devHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF2';
-      _communityHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF3';
+      _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
+      _devHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF2";
+      _communityHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF3";
 
       latestBlockNumber = await latestBlock();
 
@@ -295,59 +292,128 @@ contract("Contribution", ([miner, owner]) => {
         currentTime + 1,
         currentTime + duration.weeks(1)
       );
-    })
-    it('calculates different discount rates based on time ', async function () {
+    });
+    it("calculates different discount rates based on time ", async function() {
       //first hour
       let exchnageRate = await contribution.exchangeRate();
-      assert.equal(exchnageRate.toNumber(), 2300); //15% discount
+      assert.equal(exchnageRate.toNumber(), 2300); //15% bonus. 1eth = 2300 aix
       // second hour
-      await contribution.setBlockTimestamp(currentTime + duration.hours(1.1));
+      await contribution.setBlockTimestamp(currentTime + duration.hours(2));
       exchnageRate = await contribution.exchangeRate();
-      assert.equal(exchnageRate.toNumber(), 2200); //10% discount
+      assert.equal(exchnageRate.toNumber(), 2200); //10% bonus. 1eth = 2200 aix
 
       //after 2 hr.
-      await contribution.setBlockTimestamp(currentTime + duration.hours(2) + duration.minutes(1));
+      await contribution.setBlockTimestamp(
+        currentTime + duration.hours(2) + duration.minutes(1)
+      );
       exchnageRate = await contribution.exchangeRate();
       assert.equal(exchnageRate.toNumber(), 2000); // 0% discount
 
       await contribution.whitelistAddresses([owner]);
 
       let totalWei = await contribution.totalWeiToCollect();
-      await contribution.sendTransaction({ from: owner, value: sendingAmount.mul(10) });
+      await contribution.sendTransaction({
+        from: owner,
+        value: sendingAmount.mul(10)
+      });
       totalWei = await contribution.totalWeiToCollect();
-
-      await contribution.setBlockTimestamp(currentTime + duration.days(1) + duration.minutes(4));
-      await contribution.sendTransaction({ from: miner, value: sendingAmount.mul(5) });
-      exchnageRate = await contribution.exchangeRate();
-      assert.equal(exchnageRate.toNumber(), 2300); //15% discount
-
-      await contribution.sendTransaction({ from: miner, value: sendingAmount.mul(10) });      
-      exchnageRate = await contribution.exchangeRate();
-      assert.equal(exchnageRate.toNumber(), 2200); //10% discount
-
-      await contribution.sendTransaction({ from: owner, value: sendingAmount.mul(0.1) });        
-      exchnageRate = await contribution.exchangeRate();
-      assert.equal(exchnageRate.toNumber(), 2000); // 0% discount
     });
-  })
 
-  describe('#proxyPayment', async function () {
-    beforeEach(async function () {
+    it("calculates different bonuses based on percentage", async function() {
+      await contribution.setBlockTimestamp(
+        currentTime + duration.days(2) + duration.minutes(4)
+      );
+      let toFund = await contribution.weiToCollect();
+
+      // invest 10% of total
+      // Should get 15% bonus
+      await contribution.sendTransaction({
+        from: owner,
+        value: toFund.toNumber() * 10 / 100
+      });
+      let raised = await aix.balanceOf(owner);
+      assert.equal(
+        raised.toNumber(),
+        toFund
+          .mul(10 * 2300)
+          .div(100)
+          .toNumber()
+      );
+
+      // invest 15% of total
+      // Should get 15% bonus on the first 10%
+      //        get 10% bonus on the last 5%
+      await contribution.sendTransaction({
+        from: owner,
+        value: toFund.toNumber() * 15 / 100
+      });
+
+      raised = await aix.balanceOf(owner);
+      assert.equal(
+        raised.toNumber(),
+        toFund
+          .mul(5 * 2200 + 20 * 2300)
+          .div(100)
+          .toNumber()
+      );
+
+      // invest 15% of total
+      // Should get 10% bonus on the first 5%
+      //        get no bonus on the last 10%
+      await contribution.sendTransaction({
+        from: owner,
+        value: toFund.toNumber() * 15 / 100
+      });
+
+      raised = await aix.balanceOf(owner);
+      assert.equal(
+        raised.toNumber(),
+        toFund
+          .mul(10 * 2000 + 10 * 2200 + 20 * 2300)
+          .div(100)
+          .toNumber()
+      );
+
+      // invest 70% of total
+      // Should get no bonus on the first 60%
+      //        get 10% returned
+      await contribution.sendTransaction({
+        from: owner,
+        value: toFund.toNumber() * 70 / 100
+      });
+
+      raised = await aix.balanceOf(owner);
+      assert.equal(
+        raised.toNumber(),
+        toFund
+          .mul(70 * 2000 + 10 * 2200 + 20 * 2300)
+          .div(100)
+          .toNumber()
+      );
+    });
+  });
+
+  describe("#proxyPayment", async function() {
+    beforeEach(async function() {
       const tokenFactory = await MiniMeTokenFactory.new();
       const tokenFactoryAPT = await MiniMeTokenFactory.new();
       apt = await APT.new(tokenFactoryAPT.address);
       await apt.generateTokens(owner, tokensPreSold);
       aix = await AIX.new(tokenFactory.address);
       contribution = await MockContribution.new(aix.address);
-      exchanger = await Exchanger.new(apt.address, aix.address, contribution.address);
+      exchanger = await Exchanger.new(
+        apt.address,
+        aix.address,
+        contribution.address
+      );
 
       multiSig = addresses[0];
       totalCap = new BigNumber(1000 * 10 ** 18); //1000 eth
       sendingAmount = new BigNumber(1 * 10 ** 18); // 1 eth
       currentTime = getTime();
-      _remainderHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF1';
-      _devHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF2';
-      _communityHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF3';
+      _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
+      _devHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF2";
+      _communityHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF3";
 
       latestBlockNumber = await latestBlock();
 
@@ -365,130 +431,217 @@ contract("Contribution", ([miner, owner]) => {
         currentTime + duration.seconds(2),
         currentTime + duration.weeks(1)
       );
-    })
-    it('happy path with fallback', async function () {
+    });
+    it("happy path with fallback", async function() {
       assert.isFalse(await contribution.canPurchase(owner));
       await contribution.setBlockTimestamp(currentTime + duration.minutes(2));
       await contribution.setBlockNumber(latestBlockNumber + 10);
-      await contribution.whitelistAddresses([owner, miner, _remainderHolder, _devHolder]);
+      await contribution.whitelistAddresses([
+        owner,
+        miner,
+        _remainderHolder,
+        _devHolder
+      ]);
       let weiToCollect = await contribution.investorWeiToCollect(owner);
-      await contribution.sendTransaction({ from: owner, value: sendingAmount.mul(4) });
-      await contribution.sendTransaction({ from: miner, value: sendingAmount.mul(2) });
-      const individualWeiCollected = await contribution.individualWeiCollected(owner);
+      await contribution.sendTransaction({
+        from: owner,
+        value: sendingAmount.mul(4)
+      });
+      await contribution.sendTransaction({
+        from: miner,
+        value: sendingAmount.mul(2)
+      });
+      const individualWeiCollected = await contribution.individualWeiCollected(
+        owner
+      );
       let totalWeiCollected = await contribution.totalWeiCollected();
       const newtotal = sendingAmount.mul(4).add(sendingAmount.mul(2));
       assert.equal(totalWeiCollected.toString(10), newtotal.toString(10));
-      assert.equal(individualWeiCollected.toString(10), sendingAmount.mul(4).toString(10));
+      assert.equal(
+        individualWeiCollected.toString(10),
+        sendingAmount.mul(4).toString(10)
+      );
       const balanceOfOwner = await aix.balanceOf(owner);
       const balanceOfMiner = await aix.balanceOf(miner);
-      assert.equal(balanceOfOwner.toString(10), sendingAmount.mul(4).mul(2300).toString(10));
-      assert.equal(balanceOfMiner.toString(10), sendingAmount.mul(2).mul(2300).toString(10));
+      assert.equal(balanceOfOwner.toNumber(), sendingAmount.mul(4).mul(2300));
+      assert.equal(balanceOfMiner.toNumber(), sendingAmount.mul(2).mul(2300));
     });
 
-    it('throws when below sendingAmount', async function () {
+    it("throws when below sendingAmount", async function() {
       await contribution.setBlockTimestamp(currentTime + duration.minutes(2));
       await contribution.setBlockNumber(latestBlockNumber + 10);
       await contribution.whitelist(owner);
-      await expectThrow(contribution.sendTransaction({ from: owner, value: 1 }));
+      await expectThrow(
+        contribution.sendTransaction({ from: owner, value: 1 })
+      );
       const balanceOfOwner = await aix.balanceOf(owner);
       assert.equal(balanceOfOwner.toNumber(), 0);
     });
 
-    it('accepts 0.01 ether', async function () {
-      const minPerTx = web3.toWei(0.01, 'ether');
+    it("accepts 0.01 ether", async function() {
+      const minPerTx = web3.toWei(0.01, "ether");
       await contribution.setBlockTimestamp(currentTime + duration.minutes(2));
       await contribution.setBlockNumber(latestBlockNumber + 10);
       await contribution.whitelist(owner);
       await contribution.sendTransaction({ from: owner, value: minPerTx });
       const balanceOfOwner = await aix.balanceOf(owner);
-      assert.equal(balanceOfOwner.toNumber(), new BigNumber(minPerTx).mul(2300).toString(10));
+      assert.equal(
+        balanceOfOwner.toNumber(),
+        new BigNumber(minPerTx).mul(2300).toString(10)
+      );
     });
 
-    it('allows multisig to buy tokens', async function () {
+    it("allows multisig to buy tokens", async function() {
       const MultiSigWallet = artifacts.require("MultiSigWallet");
       const multiSig = await MultiSigWallet.new([miner, owner], 1);
       await contribution.setBlockTimestamp(currentTime + duration.minutes(2));
       await contribution.setBlockNumber(latestBlockNumber + 10);
 
-      await web3.eth.sendTransaction({ from: miner, to: multiSig.address, value: new BigNumber(10 ** 18) });
+      await web3.eth.sendTransaction({
+        from: miner,
+        to: multiSig.address,
+        value: new BigNumber(10 ** 18)
+      });
       await contribution.whitelistAddresses([multiSig.address]);
 
       let totalWeiCollected = await contribution.totalWeiCollected();
-      assert.equal(0, totalWeiCollected.toString(10));
+      assert.equal(totalWeiCollected.toString(10), "0");
 
       const amountToSendFromMultiSig = new BigNumber(10 ** 18 * 0.5);
-      await multiSig.submitTransaction(contribution.address, amountToSendFromMultiSig, '0x0');
-      const individualWeiCollected = await contribution.individualWeiCollected(multiSig.address);
+      await multiSig.submitTransaction(
+        contribution.address,
+        amountToSendFromMultiSig,
+        "0x0"
+      );
+      const individualWeiCollected = await contribution.individualWeiCollected(
+        multiSig.address
+      );
       totalWeiCollected = await contribution.totalWeiCollected();
 
-      assert.equal(totalWeiCollected.toString(10), amountToSendFromMultiSig.toString(10), 'totalWeiCollected is incorrect');
+      const newtotal = amountToSendFromMultiSig;
+
+      assert.equal(
+        totalWeiCollected.toString(10),
+        newtotal.toString(10),
+        "totalWeiCollected is incorrect"
+      );
 
       const balanceOf = await aix.balanceOf(multiSig.address);
-      assert.equal(balanceOf.toString(10), amountToSendFromMultiSig.mul(2300).toString(10));
-
-    })
-    it('contribution wallet should receive funds', async function () {
+      assert.equal(
+        balanceOf.toString(10),
+        amountToSendFromMultiSig.mul(2300).toString(10)
+      );
+    });
+    it("contribution wallet should receive funds", async function() {
       const contWallBalanceBefore = await web3.eth.getBalance(multiSig);
       const investor = web3.eth.accounts[2];
       await contribution.setBlockTimestamp(currentTime + duration.minutes(2));
       await contribution.setBlockNumber(latestBlockNumber + 10);
       await contribution.whitelistAddresses([investor, ...addresses]);
-      await contribution.sendTransaction({ from: investor, value: sendingAmount.mul(2.5) });
+      await contribution.sendTransaction({
+        from: investor,
+        value: sendingAmount.mul(2.5)
+      });
       const contWallBalanceAfter = await web3.eth.getBalance(multiSig);
       const received = contWallBalanceAfter.sub(contWallBalanceBefore);
-      assert.equal(received.toString(10), sendingAmount.mul(2.5), 'contribution wallet should receive investor funds');
-    })
+      assert.equal(
+        received.toString(10),
+        sendingAmount.mul(2.5),
+        "contribution wallet should receive investor funds"
+      );
+    });
 
-    it('throws when endDate is reached', async function() {
+    it("throws when endDate is reached", async function() {
       await contribution.whitelistAddresses([owner]);
       await contribution.setBlockTimestamp(currentTime + duration.weeks(3));
-      await expectThrow(contribution.sendTransaction({ from: owner, value: totalCap, gasPrice: '1', gas: '210000' }))
-    })
+      await expectThrow(
+        contribution.sendTransaction({
+          from: owner,
+          value: totalCap,
+          gasPrice: "1",
+          gas: "210000"
+        })
+      );
+    });
 
-    it('sends change back to investors if he buys more than cap', async function(){
-      const gasLimit = new BigNumber('210000');
+    it("sends change back to investors if he buys more than cap", async function() {
+      const gasLimit = new BigNumber("210000");
       let ownerBalance = await web3.eth.getBalance(owner);
-      await web3.eth.sendTransaction({ from: owner, to: miner, gasPrice: '1', gas: '21000', value: ownerBalance.sub('21000')});
+      await web3.eth.sendTransaction({
+        from: owner,
+        to: miner,
+        gasPrice: "1",
+        gas: "21000",
+        value: ownerBalance.sub("21000")
+      });
       ownerBalance = await web3.eth.getBalance(owner);
-      assert.equal(ownerBalance.toString(10), 0, 'owner should not have any money left');
-      await web3.eth.sendTransaction({ from: miner, to: owner, gasPrice: '1', gas: '21000', value: totalCap.mul(2).add(gasLimit) });
+      assert.equal(
+        ownerBalance.toString(10),
+        0,
+        "owner should not have any money left"
+      );
+      await web3.eth.sendTransaction({
+        from: miner,
+        to: owner,
+        gasPrice: "1",
+        gas: "21000",
+        value: totalCap.mul(2).add(gasLimit)
+      });
       ownerBalance = await web3.eth.getBalance(owner);
       await contribution.setBlockTimestamp(currentTime + duration.days(2));
       await contribution.setBlockNumber(latestBlockNumber + 10);
       await contribution.whitelistAddresses([owner]);
-      let investorWeiToCollect =  await contribution.investorWeiToCollect(owner);
+      let investorWeiToCollect = await contribution.investorWeiToCollect(owner);
       assert.equal(investorWeiToCollect.toString(10), totalCap.toString(10));
-      
-      const txReceipt = await contribution.sendTransaction({ from: owner, value: totalCap.mul(2), gasPrice: '1', gas: gasLimit });
+
+      const txReceipt = await contribution.sendTransaction({
+        from: owner,
+        value: totalCap.mul(2),
+        gasPrice: "1",
+        gas: gasLimit
+      });
       const totalWeiCap = await contribution.totalWeiCap();
       const totalWeiToCollect = await contribution.totalWeiToCollect();
       const totalWeiCollected = await contribution.totalWeiCollected();
 
       ownerBalance = await web3.eth.getBalance(owner);
-      
-      const totalCapMinusExpenses = totalCap.add(gasLimit).sub(txReceipt.receipt.gasUsed).toString(10);
+
+      const totalCapMinusExpenses = totalCap
+        .add(gasLimit)
+        .sub(txReceipt.receipt.gasUsed)
+        .toString(10);
       assert.equal(ownerBalance.toString(10), totalCapMinusExpenses);
       assert.equal(totalWeiToCollect.toString(10), 0);
-    })
-  })
+    });
+  });
 
-  describe('the rest', async function () {
-    beforeEach(async function () {
-      await web3.eth.sendTransaction({ from: miner, to: owner, gasPrice: '1', gas: '21000', value: totalCap});
+  describe("the rest", async function() {
+    beforeEach(async function() {
+      await web3.eth.sendTransaction({
+        from: miner,
+        to: owner,
+        gasPrice: "1",
+        gas: "21000",
+        value: totalCap
+      });
       const tokenFactory = await MiniMeTokenFactory.new();
       const tokenFactoryAPT = await MiniMeTokenFactory.new();
       aix = await AIX.new(tokenFactory.address);
       apt = await APT.new(tokenFactoryAPT.address);
       contribution = await MockContribution.new(aix.address);
-      exchanger = await Exchanger.new(apt.address, aix.address, contribution.address);
+      exchanger = await Exchanger.new(
+        apt.address,
+        aix.address,
+        contribution.address
+      );
 
       multiSig = owner;
       totalCap = new BigNumber(510 * 10 ** 18); //510 eth
       sendingAmount = new BigNumber(10 ** 18); // 1 eth
       currentTime = getTime();
-      _remainderHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF1';
-      _devHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF2';
-      _communityHolder = '0x0039F22efB07A647557C7C5d17854CFD6D489eF3';
+      _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
+      _devHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF2";
+      _communityHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF3";
 
       latestBlockNumber = await latestBlock();
 
@@ -506,13 +659,13 @@ contract("Contribution", ([miner, owner]) => {
         currentTime + 1,
         currentTime + duration.weeks(1)
       );
-    })
-    it('#weiToCollect(investor) within first day sets a cap for every investor', async function(){
+    });
+    it("#weiToCollect(investor) within first day sets a cap for every investor", async function() {
       await contribution.setBlockTimestamp(currentTime + 2);
       await contribution.whitelistAddresses([miner]);
       let investorCap = await contribution.investorWeiToCollect(owner);
       assert.equal(investorCap.toString(10), totalCap.toString(10));
-      
+
       await contribution.whitelistAddresses([owner]);
       investorCap = await contribution.investorWeiToCollect(owner);
       assert.equal(investorCap.toString(10), totalCap.div(2).toString(10));
@@ -521,49 +674,73 @@ contract("Contribution", ([miner, owner]) => {
       investorCap = await contribution.investorWeiToCollect(owner);
       assert.equal(investorCap.toString(10), totalCap.toString(10));
 
-      await contribution.sendTransaction({ from: owner, value: totalCap, gasPrice: '1', gas: '210000' });
+      await contribution.sendTransaction({
+        from: owner,
+        value: totalCap,
+        gasPrice: "1",
+        gas: "210000"
+      });
       investorCap = await contribution.investorWeiToCollect(owner);
       assert.equal(investorCap.toString(10), 0);
-    })
-    it('#weiToCollect() returns remaining cap', async function(){
+    });
+    it("#weiToCollect() returns remaining cap", async function() {
       let totalLeftToCollect = await contribution.totalWeiToCollect();
       assert.equal(totalLeftToCollect.toString(10), totalCap.toString(10));
       await contribution.whitelistAddresses([owner]);
       await contribution.setBlockTimestamp(currentTime + 2);
-      await contribution.sendTransaction({ from: owner, value: sendingAmount, gasPrice: '1', gas: '210000' });
+      await contribution.sendTransaction({
+        from: owner,
+        value: sendingAmount,
+        gasPrice: "1",
+        gas: "210000"
+      });
       totalLeftToCollect = await contribution.totalWeiToCollect();
-      assert.equal(totalLeftToCollect.toString(10), totalCap.sub(sendingAmount).toString(10));
+      assert.equal(
+        totalLeftToCollect.toString(10),
+        totalCap.sub(sendingAmount).toString(10)
+      );
 
-      await contribution.sendTransaction({ from: owner, value: totalCap, gasPrice: '1', gas: '210000' });
+      await contribution.sendTransaction({
+        from: owner,
+        value: totalCap,
+        gasPrice: "1",
+        gas: "210000"
+      });
       totalLeftToCollect = await contribution.totalWeiToCollect();
       assert.equal(totalLeftToCollect.toString(10), 0);
-    })
+    });
 
-    it('pauses contribution', async function() {
+    it("pauses contribution", async function() {
       let controller = await contribution.controller();
       let paused = await contribution.paused();
       assert.equal(paused, false);
-      await expectThrow(contribution.pauseContribution(true, {from: owner}));
+      await expectThrow(contribution.pauseContribution(true, { from: owner }));
       paused = await contribution.paused();
       assert.equal(paused, false);
 
-      await contribution.pauseContribution(true, {from: controller});
+      await contribution.pauseContribution(true, { from: controller });
       paused = await contribution.paused();
       assert.equal(paused, true);
-  
+
       await contribution.whitelistAddresses([owner]);
       await contribution.setBlockTimestamp(currentTime + 2);
-      await expectThrow(contribution.sendTransaction({ from: owner, value: sendingAmount, gasPrice: '1', gas: '210000' }));
+      await expectThrow(
+        contribution.sendTransaction({
+          from: owner,
+          value: sendingAmount,
+          gasPrice: "1",
+          gas: "210000"
+        })
+      );
       const balanceOf = await aix.balanceOf(owner);
       assert.equal(balanceOf.toString(10), 0);
-  
-    })
-    describe('#allowTransfers', async function () {
-      it('if false, no transfers should be allowed', async function(){ 
+    });
+    describe("#allowTransfers", async function() {
+      it("if false, no transfers should be allowed", async function() {
         let transferable = await contribution.transferable();
         assert.equal(transferable, false);
 
-        await expectThrow(contribution.allowTransfers(true, {from: owner}));
+        await expectThrow(contribution.allowTransfers(true, { from: owner }));
         transferable = await contribution.transferable();
         assert.equal(transferable, false);
 
@@ -573,22 +750,27 @@ contract("Contribution", ([miner, owner]) => {
 
         await contribution.whitelistAddresses([owner]);
         await contribution.setBlockTimestamp(currentTime + 2);
-        await contribution.sendTransaction({ from: owner, value: sendingAmount, gasPrice: '1', gas: '210000' });
+        await contribution.sendTransaction({
+          from: owner,
+          value: sendingAmount,
+          gasPrice: "1",
+          gas: "210000"
+        });
 
         let minerBalance = await aix.balanceOf(miner);
         assert.equal(minerBalance.toString(10), 0);
-        await aix.transfer(miner, 1, {from: owner});
+        await aix.transfer(miner, 1, { from: owner });
         minerBalance = await aix.balanceOf(miner);
         assert.equal(minerBalance.toString(10), 1);
 
         await contribution.allowTransfers(false);
-        await expectThrow(aix.transfer(miner, 1, {from: owner}));
+        await expectThrow(aix.transfer(miner, 1, { from: owner }));
         minerBalance = await aix.balanceOf(miner);
         assert.equal(minerBalance.toString(10), 1);
-      })
-    })
-    describe('#finalize', async function () {
-      it('can only be called once', async function(){
+      });
+    });
+    describe("#finalize", async function() {
+      it("can only be called once", async function() {
         let finalizedTime = await contribution.finalizedTime();
         assert.equal(finalizedTime.toString(10), 0);
         await contribution.setBlockTimestamp(currentTime + 2);
@@ -599,91 +781,128 @@ contract("Contribution", ([miner, owner]) => {
         await expectThrow(contribution.finalize());
         finalizedTime = await contribution.finalizedTime();
         assert.equal(finalizedTime.toString(10), currentTime + 2);
-
-      })
-      it('can be called by anyone after endTime', async function(){
+      });
+      it("can be called by anyone after endTime", async function() {
         let finalizedTime = await contribution.finalizedTime();
         assert.equal(finalizedTime.toString(10), 0);
         await contribution.setBlockTimestamp(currentTime + 2);
-        await expectThrow(contribution.finalize({from: owner})); 
+        await expectThrow(contribution.finalize({ from: owner }));
         finalizedTime = await contribution.finalizedTime();
         assert.equal(finalizedTime.toString(10), 0);
 
         await contribution.setBlockTimestamp(currentTime + duration.weeks(3));
-        await contribution.finalize({from: owner}); 
+        await contribution.finalize({ from: owner });
         finalizedTime = await contribution.finalizedTime();
-        assert.equal(finalizedTime.toString(10), currentTime + duration.weeks(3));
-      })
-      it('can be called when cap is met by anyone', async function(){
+        assert.equal(
+          finalizedTime.toString(10),
+          currentTime + duration.weeks(3)
+        );
+      });
+      it("can be called when cap is met by anyone", async function() {
         let finalizedTime = await contribution.finalizedTime();
         assert.equal(finalizedTime.toString(10), 0);
-        
+
         await contribution.whitelistAddresses([owner]);
         await contribution.setBlockTimestamp(currentTime + 2);
-        await contribution.sendTransaction({ from: owner, value: totalCap.add(210000), gasPrice: '1', gas: '210000' });
+        await contribution.sendTransaction({
+          from: owner,
+          value: totalCap.add(210000),
+          gasPrice: "1",
+          gas: "210000"
+        });
 
         let totalWeiToCollect = await contribution.totalWeiToCollect();
         assert.equal(totalWeiToCollect.toString(10), 0);
-        await contribution.finalize({from: owner}); 
+        await contribution.finalize({ from: owner });
         finalizedTime = await contribution.finalizedTime();
         assert.equal(finalizedTime.toString(10), currentTime + 2);
-
-      })
-      it('generates tokens to wallets', async function(){
+      });
+      it("generates tokens to wallets", async function() {
         let finalizedTime = await contribution.finalizedTime();
         assert.equal(finalizedTime.toString(10), 0);
-        
+
         await contribution.whitelistAddresses([owner]);
         await contribution.setBlockTimestamp(currentTime + duration.days(2));
         const amountToSend = new BigNumber(51 * 10 ** 18);
         let totalSupply = await aix.totalSupply();
-        await contribution.sendTransaction({ from: owner, value: totalCap, gasPrice: '1', gas: '210000' });
+        await contribution.sendTransaction({
+          from: owner,
+          value: totalCap,
+          gasPrice: "1",
+          gas: "210000"
+        });
 
         totalSupply = await aix.totalSupply();
         let expectedSupply = totalSupply.mul(100).div(51);
-        await contribution.finalize(); 
+        await contribution.finalize();
         totalSupply = await aix.totalSupply();
-        assert.equal(expectedSupply.toFixed(0), totalSupply.toString(10), 'totalSupply is not correct');
+        assert.equal(
+          expectedSupply.toFixed(0),
+          totalSupply.toString(10),
+          "totalSupply is not correct"
+        );
 
         const remainderBalance = await aix.balanceOf(_remainderHolder);
         const devBalance = await aix.balanceOf(_devHolder);
         const communityBalance = await aix.balanceOf(_communityHolder);
-        assert.equal(remainderBalance.toString(10), 0, 'remainder is not 0');
-        assert.equal(devBalance.toString(10), totalSupply.mul(20).div(100).toString(10), 'devbalance is not correct');
-        assert.equal(communityBalance.toString(10), totalSupply.mul(29).div(100).toString(10), 'community is not correct');
+        assert.equal(remainderBalance.toString(10), 0, "remainder is not 0");
+        assert.equal(
+          devBalance.toString(10),
+          totalSupply
+            .mul(20)
+            .div(100)
+            .toString(10),
+          "devbalance is not correct"
+        );
+        assert.equal(
+          communityBalance.toString(10),
+          totalSupply
+            .mul(29)
+            .div(100)
+            .toString(10),
+          "community is not correct"
+        );
+      });
+    });
+  });
 
-      })
-    })
-  })
-
-
-
-  describe('#whitelistAddresses', async function () {
-
-    beforeEach(async function () {
+  describe("#whitelistAddresses", async function() {
+    beforeEach(async function() {
       const tokenFactory = await MiniMeTokenFactory.new();
       aix = await AIX.new(tokenFactory.address);
       contribution = await MockContribution.new(aix.address);
-    })
-    it('should whitelist an array of addresses', async function () {
+    });
+    it("should whitelist an array of addresses", async function() {
       assert.isFalse(await contribution.canPurchase(owner));
       assert.isFalse(await contribution.canPurchase(miner));
       await contribution.whitelistAddresses([owner, miner, ...addresses]);
       assert.isTrue(await contribution.canPurchase(owner));
       assert.isTrue(await contribution.canPurchase(miner));
-      assert.isTrue(await contribution.canPurchase(addresses[addresses.length - 1]));
+      assert.isTrue(
+        await contribution.canPurchase(addresses[addresses.length - 1])
+      );
       await contribution.blacklistAddresses([owner, miner, ...addresses]);
       assert.isFalse(await contribution.canPurchase(owner));
       assert.isFalse(await contribution.canPurchase(miner));
-      assert.isFalse(await contribution.canPurchase(addresses[addresses.length - 1]));
-    })
+      assert.isFalse(
+        await contribution.canPurchase(addresses[addresses.length - 1])
+      );
+    });
 
-    it('can only be called from controller', async function () {
-      await expectThrow(contribution.whitelistAddresses([owner, miner, ...addresses], { from: addresses[0] }));
-      await expectThrow(contribution.blacklistAddresses([owner, miner, ...addresses], { from: addresses[0] }));
-    })
+    it("can only be called from controller", async function() {
+      await expectThrow(
+        contribution.whitelistAddresses([owner, miner, ...addresses], {
+          from: addresses[0]
+        })
+      );
+      await expectThrow(
+        contribution.blacklistAddresses([owner, miner, ...addresses], {
+          from: addresses[0]
+        })
+      );
+    });
 
-    it('increments numWhitelistedInvestors when whitelisted', async function () {
+    it("increments numWhitelistedInvestors when whitelisted", async function() {
       let numWhitelistedInvestors = await contribution.numWhitelistedInvestors();
       assert.equal(numWhitelistedInvestors.toNumber(), 0);
       await contribution.whitelistAddresses([owner, miner]);
@@ -694,9 +913,8 @@ contract("Contribution", ([miner, owner]) => {
       await contribution.whitelistAddresses([addresses[0]]);
       numWhitelistedInvestors = await contribution.numWhitelistedInvestors();
       assert.equal(numWhitelistedInvestors.toNumber(), 3);
-
-    })
-    it('decrements numWhitelistedInvestors when blacklisted', async function () {
+    });
+    it("decrements numWhitelistedInvestors when blacklisted", async function() {
       let numWhitelistedInvestors = await contribution.numWhitelistedInvestors();
       assert.equal(numWhitelistedInvestors.toNumber(), 0);
       await contribution.blacklistAddresses([owner, miner]);
@@ -711,6 +929,6 @@ contract("Contribution", ([miner, owner]) => {
       numWhitelistedInvestors = await contribution.numWhitelistedInvestors();
       await contribution.blacklistAddresses([owner]);
       assert.equal(numWhitelistedInvestors.toNumber(), 1);
-    })
-  })
+    });
+  });
 });
