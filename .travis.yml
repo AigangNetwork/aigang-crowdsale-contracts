@@ -17,7 +17,7 @@ script:
 
 deploy:
   provider: pages
-  local_dir: mochawesome-report
+  local_dir: coverageEnv/mochawesome-report
   target_branch: gh-pages
   email: travis@ci.com
   name: Deployment Bot
