@@ -7,7 +7,7 @@ const assert = require("chai").assert;
 const BigNumber = web3.BigNumber;
 import { expectThrow, duration, latestBlock, getTime } from "./utils.js";
 
-contract("Contribution", ([miner, owner]) => {
+contract("Contribution", ([miner, owner, investor]) => {
   let aix;
   let contribution;
   let exchanger;
@@ -558,21 +558,18 @@ contract("Contribution", ([miner, owner]) => {
         contribution.sendTransaction({
           from: owner,
           value: totalCap,
-          gasPrice: "1",
-          gas: "210000"
+          
         })
       );
     });
 
     it("sends change back to investors if he buys more than cap", async function() {
-      const gasLimit = new BigNumber("210000");
       let ownerBalance = await web3.eth.getBalance(owner);
       await web3.eth.sendTransaction({
         from: owner,
         to: miner,
-        gasPrice: "1",
-        gas: "21000",
-        value: ownerBalance.sub("21000")
+        gas: 21000,
+        value: ownerBalance.sub(21000)
       });
       ownerBalance = await web3.eth.getBalance(owner);
       assert.equal(
@@ -583,9 +580,7 @@ contract("Contribution", ([miner, owner]) => {
       await web3.eth.sendTransaction({
         from: miner,
         to: owner,
-        gasPrice: "1",
-        gas: "21000",
-        value: totalCap.mul(2).add(gasLimit)
+        value: totalCap.mul(2)
       });
       ownerBalance = await web3.eth.getBalance(owner);
       await contribution.setBlockTimestamp(currentTime + duration.days(2));
@@ -596,9 +591,8 @@ contract("Contribution", ([miner, owner]) => {
 
       const txReceipt = await contribution.sendTransaction({
         from: owner,
-        value: totalCap.mul(2),
-        gasPrice: "1",
-        gas: gasLimit
+        value: totalCap.mul(1.8),
+        
       });
       const totalWeiCap = await contribution.totalWeiCap();
       const totalWeiToCollect = await contribution.totalWeiToCollect();
@@ -607,7 +601,6 @@ contract("Contribution", ([miner, owner]) => {
       ownerBalance = await web3.eth.getBalance(owner);
 
       const totalCapMinusExpenses = totalCap
-        .add(gasLimit)
         .sub(txReceipt.receipt.gasUsed)
         .toString(10);
       assert.equal(ownerBalance.toString(10), totalCapMinusExpenses);
@@ -620,8 +613,7 @@ contract("Contribution", ([miner, owner]) => {
       await web3.eth.sendTransaction({
         from: miner,
         to: owner,
-        gasPrice: "1",
-        gas: "21000",
+        
         value: totalCap
       });
       const tokenFactory = await MiniMeTokenFactory.new();
@@ -677,8 +669,7 @@ contract("Contribution", ([miner, owner]) => {
       await contribution.sendTransaction({
         from: owner,
         value: totalCap,
-        gasPrice: "1",
-        gas: "210000"
+        
       });
       investorCap = await contribution.investorWeiToCollect(owner);
       assert.equal(investorCap.toString(10), 0);
@@ -691,8 +682,7 @@ contract("Contribution", ([miner, owner]) => {
       await contribution.sendTransaction({
         from: owner,
         value: sendingAmount,
-        gasPrice: "1",
-        gas: "210000"
+        
       });
       totalLeftToCollect = await contribution.totalWeiToCollect();
       assert.equal(
@@ -703,8 +693,7 @@ contract("Contribution", ([miner, owner]) => {
       await contribution.sendTransaction({
         from: owner,
         value: totalCap,
-        gasPrice: "1",
-        gas: "210000"
+        
       });
       totalLeftToCollect = await contribution.totalWeiToCollect();
       assert.equal(totalLeftToCollect.toString(10), 0);
@@ -728,8 +717,6 @@ contract("Contribution", ([miner, owner]) => {
         contribution.sendTransaction({
           from: owner,
           value: sendingAmount,
-          gasPrice: "1",
-          gas: "210000"
         })
       );
       const balanceOf = await aix.balanceOf(owner);
@@ -753,8 +740,7 @@ contract("Contribution", ([miner, owner]) => {
         await contribution.sendTransaction({
           from: owner,
           value: sendingAmount,
-          gasPrice: "1",
-          gas: "210000"
+          
         });
 
         let minerBalance = await aix.balanceOf(miner);
@@ -807,8 +793,7 @@ contract("Contribution", ([miner, owner]) => {
         await contribution.sendTransaction({
           from: owner,
           value: totalCap.add(210000),
-          gasPrice: "1",
-          gas: "210000"
+          
         });
 
         let totalWeiToCollect = await contribution.totalWeiToCollect();
@@ -828,8 +813,7 @@ contract("Contribution", ([miner, owner]) => {
         await contribution.sendTransaction({
           from: owner,
           value: totalCap,
-          gasPrice: "1",
-          gas: "210000"
+          
         });
 
         totalSupply = await aix.totalSupply();
@@ -892,12 +876,12 @@ contract("Contribution", ([miner, owner]) => {
     it("can only be called from controller", async function() {
       await expectThrow(
         contribution.whitelistAddresses([owner, miner, ...addresses], {
-          from: addresses[0]
+          from: investor
         })
       );
       await expectThrow(
         contribution.blacklistAddresses([owner, miner, ...addresses], {
-          from: addresses[0]
+          from: investor
         })
       );
     });
