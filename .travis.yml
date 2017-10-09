@@ -24,4 +24,6 @@ deploy:
   skip_cleanup: true
   github_token: $GITHUB_TOKEN # Set in travis-ci.org dashboard
   on:
-    condition: $TRAVIS_BRANCH == "master" || $TRAVIS_BRANCH == "feature/contribution"
+    branch: master
+  on:
+    branch: feature/contribution
