@@ -13,6 +13,7 @@ contract Contribution is Controlled, TokenController {
   address public remainderHolder;
   address public devHolder;
   address public communityHolder;
+  address public collector;
 
   uint256 public totalWeiCap;             // Total Wei to be collected
   uint256 public totalWeiCollected;       // How much Wei has been collected
@@ -44,9 +45,14 @@ contract Contribution is Controlled, TokenController {
   }
 
   modifier contributionOpen() {
-    assert(getBlockTimestamp() >= startTime &&
-           getBlockTimestamp() <= endTime &&
-           finalizedTime == 0);
+    // collector can start depositing 2 days prior
+    if (msg.sender == collector) {
+      assert(getBlockTimestamp().add(2 days) >= startTime);
+    } else {
+      assert(getBlockTimestamp() >= startTime);
+    }
+    assert(getBlockTimestamp() <= endTime);
+    assert(finalizedTime == 0);
     _;
   }
 
@@ -67,6 +73,7 @@ contract Contribution is Controlled, TokenController {
       address _remainderHolder,
       address _devHolder,
       address _communityHolder,
+      address _collector,
       uint256 _totalWeiCap,
       uint256 _startTime,
       uint256 _endTime
@@ -89,6 +96,9 @@ contract Contribution is Controlled, TokenController {
 
     require(_communityHolder != 0x0);
     communityHolder = _communityHolder;
+
+    require(_collector != 0x0);
+    collector = _collector;
 
     assert(_startTime >= getBlockTimestamp());
     require(_startTime < _endTime);
@@ -142,7 +152,6 @@ contract Contribution is Controlled, TokenController {
 
   // ETH-AIX exchange rate
   function exchangeRate() constant public initialized returns (uint256 rate) {
-
     if (getBlockTimestamp() <= startTime + 1 hours) {
       // 15% Bonus
       rate = 2300;
@@ -155,6 +164,11 @@ contract Contribution is Controlled, TokenController {
   }
 
   function tokensToGenerate(uint256 toFund) internal returns (uint256) {
+    // collector gets 15% bonus
+    if (msg.sender == collector) {
+      return toFund.mul(2300);
+    }
+
     if (getBlockTimestamp() < startTime + 1 days) {
       return toFund.mul(exchangeRate());
     }
