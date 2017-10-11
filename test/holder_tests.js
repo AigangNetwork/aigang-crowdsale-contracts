@@ -8,7 +8,7 @@ const assert = require("chai").assert;
 const BigNumber = web3.BigNumber;
 import { expectThrow, duration, latestBlock, getTime } from "./utils.js";
 
-contract("Holder", ([miner, owner, dev, community, remainder]) => {
+contract("Holder", ([miner, owner, dev, community, remainder, collector]) => {
   let tokenFactory;
   let aix;
   let contribution;
@@ -66,6 +66,7 @@ contract("Holder", ([miner, owner, dev, community, remainder]) => {
         remainderHolder.address,
         _devHolder,
         _communityHolder,
+        collector,
         totalCap,
         currentTime + 1,
         currentTime + 10

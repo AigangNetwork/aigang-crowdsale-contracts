@@ -7,7 +7,7 @@ const assert = require("chai").assert;
 const BigNumber = web3.BigNumber;
 import { expectThrow, duration, latestBlock, getTime } from "./utils.js";
 
-contract("Contribution", ([miner, owner, investor]) => {
+contract("Contribution", ([miner, owner, investor, collector]) => {
   let aix;
   let contribution;
   let exchanger;
@@ -85,6 +85,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         _remainderHolder,
         _devHolder,
         _communityHolder,
+        collector,
         totalCap,
         currentTime + 1,
         currentTime + 10
@@ -134,6 +135,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         _remainderHolder,
         _devHolder,
         _communityHolder,
+        collector,
         totalCap,
         currentTime + 1,
         currentTime + 10
@@ -152,6 +154,7 @@ contract("Contribution", ([miner, owner, investor]) => {
           _remainderHolder,
           _devHolder,
           _communityHolder,
+          collector,
           totalCap,
           currentTime + 1,
           currentTime + 10
@@ -169,6 +172,7 @@ contract("Contribution", ([miner, owner, investor]) => {
           _remainderHolder,
           _devHolder,
           _communityHolder,
+          collector,
           totalCap,
           currentTime + 1,
           currentTime + 10
@@ -189,6 +193,7 @@ contract("Contribution", ([miner, owner, investor]) => {
           _remainderHolder,
           _devHolder,
           _communityHolder,
+          collector,
           totalCap,
           currentTime - 1,
           currentTime + 10
@@ -209,6 +214,7 @@ contract("Contribution", ([miner, owner, investor]) => {
           _remainderHolder,
           _devHolder,
           _communityHolder,
+          collector,
           0,
           currentTime + 1,
           currentTime + 10
@@ -229,6 +235,7 @@ contract("Contribution", ([miner, owner, investor]) => {
           _remainderHolder,
           _devHolder,
           _communityHolder,
+          collector,
           totalCap,
           currentTime + 11,
           currentTime + 1
@@ -288,6 +295,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         _remainderHolder,
         _devHolder,
         _communityHolder,
+        collector,
         totalCap,
         currentTime + 1,
         currentTime + duration.weeks(1)
@@ -427,6 +435,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         _remainderHolder,
         _devHolder,
         _communityHolder,
+        collector,
         totalCap,
         currentTime + duration.seconds(2),
         currentTime + duration.weeks(1)
@@ -557,8 +566,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       await expectThrow(
         contribution.sendTransaction({
           from: owner,
-          value: totalCap,
-          
+          value: totalCap
         })
       );
     });
@@ -591,8 +599,7 @@ contract("Contribution", ([miner, owner, investor]) => {
 
       const txReceipt = await contribution.sendTransaction({
         from: owner,
-        value: totalCap.mul(1.8),
-        
+        value: totalCap.mul(1.8)
       });
       const totalWeiCap = await contribution.totalWeiCap();
       const totalWeiToCollect = await contribution.totalWeiToCollect();
@@ -613,7 +620,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       await web3.eth.sendTransaction({
         from: miner,
         to: owner,
-        
+
         value: totalCap
       });
       const tokenFactory = await MiniMeTokenFactory.new();
@@ -647,6 +654,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         _remainderHolder,
         _devHolder,
         _communityHolder,
+        collector,
         totalCap,
         currentTime + 1,
         currentTime + duration.weeks(1)
@@ -668,8 +676,7 @@ contract("Contribution", ([miner, owner, investor]) => {
 
       await contribution.sendTransaction({
         from: owner,
-        value: totalCap,
-        
+        value: totalCap
       });
       investorCap = await contribution.investorWeiToCollect(owner);
       assert.equal(investorCap.toString(10), 0);
@@ -681,8 +688,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       await contribution.setBlockTimestamp(currentTime + 2);
       await contribution.sendTransaction({
         from: owner,
-        value: sendingAmount,
-        
+        value: sendingAmount
       });
       totalLeftToCollect = await contribution.totalWeiToCollect();
       assert.equal(
@@ -692,8 +698,7 @@ contract("Contribution", ([miner, owner, investor]) => {
 
       await contribution.sendTransaction({
         from: owner,
-        value: totalCap,
-        
+        value: totalCap
       });
       totalLeftToCollect = await contribution.totalWeiToCollect();
       assert.equal(totalLeftToCollect.toString(10), 0);
@@ -716,7 +721,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       await expectThrow(
         contribution.sendTransaction({
           from: owner,
-          value: sendingAmount,
+          value: sendingAmount
         })
       );
       const balanceOf = await aix.balanceOf(owner);
@@ -739,8 +744,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         await contribution.setBlockTimestamp(currentTime + 2);
         await contribution.sendTransaction({
           from: owner,
-          value: sendingAmount,
-          
+          value: sendingAmount
         });
 
         let minerBalance = await aix.balanceOf(miner);
@@ -792,8 +796,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         await contribution.setBlockTimestamp(currentTime + 2);
         await contribution.sendTransaction({
           from: owner,
-          value: totalCap.add(210000),
-          
+          value: totalCap.add(210000)
         });
 
         let totalWeiToCollect = await contribution.totalWeiToCollect();
@@ -812,8 +815,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         let totalSupply = await aix.totalSupply();
         await contribution.sendTransaction({
           from: owner,
-          value: totalCap,
-          
+          value: totalCap
         });
 
         totalSupply = await aix.totalSupply();
