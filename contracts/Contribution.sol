@@ -237,7 +237,7 @@ contract Contribution is Controlled, TokenController {
   function doBuy(address _th) internal {
     // whitelisting only during the first day
     if (getBlockTimestamp() <= startTime + 1 days) {
-      require(canPurchase[_th]);
+      require(canPurchase[_th] || msg.sender == collector);
     }
     require(msg.value >= minimumPerTransaction);
     uint256 toFund = msg.value;
