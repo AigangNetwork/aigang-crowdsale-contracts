@@ -17,6 +17,7 @@ contract("Holder", ([miner, owner, dev, community, remainder, collector]) => {
   let tokensPreSold = new BigNumber(50 * 10 ** 18);
   let multiSig = owner;
   let totalCap;
+  let collectorWeiCap;
   let sendingAmount;
   let currentTime;
   let remainderHolder;
@@ -47,6 +48,7 @@ contract("Holder", ([miner, owner, dev, community, remainder, collector]) => {
       );
 
       totalCap = new BigNumber(5 * 10 ** 18); // 5 eth
+      collectorWeiCap = totalCap.div(10);
       sendingAmount = new BigNumber(10 ** 18); // 1 eth
       currentTime = getTime();
       _devHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF2";
@@ -67,6 +69,7 @@ contract("Holder", ([miner, owner, dev, community, remainder, collector]) => {
         _devHolder,
         _communityHolder,
         collector,
+        collectorWeiCap,
         totalCap,
         currentTime + 1,
         currentTime + 10

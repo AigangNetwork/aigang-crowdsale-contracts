@@ -15,6 +15,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
   let tokensPreSold = new BigNumber(10 ** 18 * 50);
   let multiSig;
   let totalCap;
+  let collectorWeiCap;
   let sendingAmount;
   let currentTime;
   let _remainderHolder;
@@ -63,6 +64,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
 
       multiSig = owner;
       totalCap = new BigNumber(1000 * 10 ** 18); //1000 eth
+      collectorWeiCap = totalCap.div(10);
       sendingAmount = new BigNumber(10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
@@ -86,6 +88,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
         _devHolder,
         _communityHolder,
         collector,
+        collectorWeiCap,
         totalCap,
         currentTime + 1,
         currentTime + 10
@@ -136,6 +139,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
         _devHolder,
         _communityHolder,
         collector,
+        collectorWeiCap,
         totalCap,
         currentTime + 1,
         currentTime + 10
@@ -155,6 +159,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
           _devHolder,
           _communityHolder,
           collector,
+          collectorWeiCap,
           totalCap,
           currentTime + 1,
           currentTime + 10
@@ -173,6 +178,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
           _devHolder,
           _communityHolder,
           collector,
+          collectorWeiCap,
           totalCap,
           currentTime + 1,
           currentTime + 10
@@ -194,6 +200,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
           _devHolder,
           _communityHolder,
           collector,
+          collectorWeiCap,
           totalCap,
           currentTime - 1,
           currentTime + 10
@@ -215,6 +222,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
           _devHolder,
           _communityHolder,
           collector,
+          collectorWeiCap,
           0,
           currentTime + 1,
           currentTime + 10
@@ -236,6 +244,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
           _devHolder,
           _communityHolder,
           collector,
+          collectorWeiCap,
           totalCap,
           currentTime + 11,
           currentTime + 1
@@ -277,6 +286,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
 
       multiSig = owner;
       totalCap = new BigNumber(60 * 10 ** 18); //59 eth
+      collectorWeiCap = totalCap.div(10);
       sendingAmount = new BigNumber(1 * 10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
@@ -296,6 +306,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
         _devHolder,
         _communityHolder,
         collector,
+        collectorWeiCap,
         totalCap,
         currentTime + 1,
         currentTime + duration.weeks(1)
@@ -417,6 +428,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
 
       multiSig = addresses[0];
       totalCap = new BigNumber(1000 * 10 ** 18); //1000 eth
+      collectorWeiCap = totalCap.div(10);
       sendingAmount = new BigNumber(1 * 10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
@@ -436,6 +448,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
         _devHolder,
         _communityHolder,
         collector,
+        collectorWeiCap,
         totalCap,
         currentTime + duration.seconds(2),
         currentTime + duration.weeks(1)
@@ -636,6 +649,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
 
       multiSig = owner;
       totalCap = new BigNumber(510 * 10 ** 18); //510 eth
+      collectorWeiCap = totalCap.div(10);
       sendingAmount = new BigNumber(10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
@@ -655,6 +669,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
         _devHolder,
         _communityHolder,
         collector,
+        collectorWeiCap,
         totalCap,
         currentTime + 1,
         currentTime + duration.weeks(1)

@@ -45,6 +45,7 @@ module.exports = function(deployer, chain, accounts) {
     const exchanger = await Exchanger.deployed();
 
     const totalCap = new BigNumber(10**18 * 1000);
+    const collectorCap = totalCap.div(10);
     const startTime = latestTime() + duration.minutes(5);
     const endTime = latestTime() + duration.weeks(5);
 
@@ -68,6 +69,7 @@ module.exports = function(deployer, chain, accounts) {
       _devHolder,
       _communityHolder,
       _collector,
+      collectorCap,
       totalCap,
       startTime, endTime
     )

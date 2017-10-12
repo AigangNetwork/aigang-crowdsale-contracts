@@ -13,7 +13,10 @@ contract Contribution is Controlled, TokenController {
   address public remainderHolder;
   address public devHolder;
   address public communityHolder;
+
   address public collector;
+  uint256 public collectorWeiCap;
+  uint256 public collectorWeiCollected;
 
   uint256 public totalWeiCap;             // Total Wei to be collected
   uint256 public totalWeiCollected;       // How much Wei has been collected
@@ -74,6 +77,7 @@ contract Contribution is Controlled, TokenController {
       address _devHolder,
       address _communityHolder,
       address _collector,
+      uint256 _collectorWeiCap,
       uint256 _totalWeiCap,
       uint256 _startTime,
       uint256 _endTime
@@ -99,6 +103,10 @@ contract Contribution is Controlled, TokenController {
 
     require(_collector != 0x0);
     collector = _collector;
+
+    require(_collectorWeiCap > 0);
+    require(_collectorWeiCap <= _totalWeiCap);
+    collectorWeiCap = _collectorWeiCap;
 
     assert(_startTime >= getBlockTimestamp());
     require(_startTime < _endTime);
@@ -318,7 +326,10 @@ contract Contribution is Controlled, TokenController {
     uint256 collected;
     // adding 1 day as a placeholder for X hours.
     // This should change into a variable or coded into the contract.
-    if (getBlockTimestamp() <= startTime + 1 days) {
+    if (investor == collector) {
+      cap = collectorWeiCap;
+      collected = individualWeiCollected[investor];
+    } else if (getBlockTimestamp() <= startTime + 1 days) {
       cap = totalWeiCap.div(numWhitelistedInvestors);
       collected = individualWeiCollected[investor];
     } else {
