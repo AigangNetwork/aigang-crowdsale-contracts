@@ -44,6 +44,10 @@ contract Exchanger is Controlled {
     contribution = Contribution(_contribution);
   }
 
+  function () public {
+    collect();
+  }
+
   /// @notice This method should be called by the APT holders to collect their
   ///  corresponding AIXs
   function collect() public {

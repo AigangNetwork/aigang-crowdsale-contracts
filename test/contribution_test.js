@@ -360,8 +360,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
       );
 
       // invest 15% of total
-      // Should get 15% bonus on the first 10%
-      //        get 10% bonus on the last 5%
+      // Should get 15% bonus
       await contribution.sendTransaction({
         from: owner,
         value: toFund.toNumber() * 15 / 100
@@ -371,14 +370,13 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
       assert.equal(
         raised.toNumber(),
         toFund
-          .mul(5 * 2200 + 20 * 2300)
+          .mul(25 * 2300)
           .div(100)
           .toNumber()
       );
 
       // invest 15% of total
-      // Should get 10% bonus on the first 5%
-      //        get no bonus on the last 10%
+      // Should get 10% bonus
       await contribution.sendTransaction({
         from: owner,
         value: toFund.toNumber() * 15 / 100
@@ -388,7 +386,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
       assert.equal(
         raised.toNumber(),
         toFund
-          .mul(10 * 2000 + 10 * 2200 + 20 * 2300)
+          .mul(15 * 2200 + 25 * 2300)
           .div(100)
           .toNumber()
       );
@@ -405,7 +403,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
       assert.equal(
         raised.toNumber(),
         toFund
-          .mul(70 * 2000 + 10 * 2200 + 20 * 2300)
+          .mul(60 * 2000 + 15 * 2200 + 25 * 2300)
           .div(100)
           .toNumber()
       );

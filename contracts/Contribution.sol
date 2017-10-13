@@ -159,55 +159,43 @@ contract Contribution is Controlled, TokenController {
   }
 
   // ETH-AIX exchange rate
-  function exchangeRate() constant public initialized returns (uint256 rate) {
+  function exchangeRate() constant public initialized returns (uint256) {
     if (getBlockTimestamp() <= startTime + 1 hours) {
       // 15% Bonus
-      rate = 2300;
-    } else if (getBlockTimestamp() <= startTime + 2 hours) {
-      // 10% Bonus
-      rate = 2200;
-    } else {
-      rate = 2000;
+      return 2300;
     }
+
+    if (getBlockTimestamp() <= startTime + 2 hours) {
+      // 10% Bonus
+      return 2200;
+    }
+
+    if (getBlockTimestamp() <= startTime + 1 days) {
+      return 2000;
+    }
+
+    uint256 collectedAfter24Hours = notCollectedAmountAfter24Hours.sub(weiToCollect());
+
+    if (collectedAfter24Hours <= twentyPercentWithBonus) {
+      // 15% Bonus
+      return 2300;
+    }
+
+    if (collectedAfter24Hours <= thirtyPercentWithBonus) {
+      // 10% Bonus
+      return 2200;
+    }
+
+    return 2000;
   }
 
-  function tokensToGenerate(uint256 toFund) internal returns (uint256) {
+  function tokensToGenerate(uint256 toFund) constant public returns (uint256) {
     // collector gets 15% bonus
     if (msg.sender == collector) {
       return toFund.mul(2300);
     }
 
-    if (getBlockTimestamp() < startTime + 1 days) {
-      return toFund.mul(exchangeRate());
-    }
-
-    if (notCollectedAmountAfter24Hours == 0) {
-      notCollectedAmountAfter24Hours = weiToCollect();
-      twentyPercentWithBonus = notCollectedAmountAfter24Hours.mul(20).div(100);
-      thirtyPercentWithBonus = notCollectedAmountAfter24Hours.mul(30).div(100);
-    }
-
-    uint256 toGenerate = 0;
-
-    // We start by generating the tokens over the remaining 30% without bonus.
-    if (toFund >= thirtyPercentWithBonus) {
-      uint256 overThirtyPercent = toFund.sub(thirtyPercentWithBonus);
-      toGenerate = toGenerate.add(overThirtyPercent.mul(2000));
-      toFund = toFund.sub(overThirtyPercent);
-    }
-
-    // We generate the tokens over the remaining 20% with bonus.
-    if (toFund >= twentyPercentWithBonus) {
-      uint256 overTwentyPercent = toFund.sub(twentyPercentWithBonus);
-      toGenerate = toGenerate.add(overTwentyPercent.mul(2200));
-      toFund = toFund.sub(overTwentyPercent);
-      thirtyPercentWithBonus = thirtyPercentWithBonus.sub(overTwentyPercent);
-    }
-
-    toGenerate = toGenerate.add(toFund.mul(2300));
-    twentyPercentWithBonus = twentyPercentWithBonus.sub(toFund);
-    thirtyPercentWithBonus = thirtyPercentWithBonus.sub(toFund);
-    return toGenerate;
+    return toFund.mul(exchangeRate());
   }
 
   /// @notice If anybody sends Ether directly to this contract, consider he is
@@ -246,7 +234,12 @@ contract Contribution is Controlled, TokenController {
     // whitelisting only during the first day
     if (getBlockTimestamp() <= startTime + 1 days) {
       require(canPurchase[_th] || msg.sender == collector);
+    } else if (notCollectedAmountAfter24Hours == 0) {
+      notCollectedAmountAfter24Hours = weiToCollect();
+      twentyPercentWithBonus = notCollectedAmountAfter24Hours.mul(20).div(100);
+      thirtyPercentWithBonus = notCollectedAmountAfter24Hours.mul(30).div(100);
     }
+
     require(msg.value >= minimumPerTransaction);
     uint256 toFund = msg.value;
     uint256 toCollect = weiToCollect(_th);
