@@ -9,16 +9,39 @@
   "scripts": {
     "build": "yarn truffle compile",
     "deploy": "yarn truffle migrate",
-    "test": "yarn truffle test"
+    "test": "bash scripts/test.sh",
+    "coverage": "bash scripts/coverage.sh"
   },
   "repository": "git+https://github.com/AigangNetwork/aigang-contracts.git",
-  "author": "Klaus Hott Vidal <klahott@gmail.com>",
+  "contributors": [
+    {
+      "author": "Klaus Hott Vidal <klahott@gmail.com>"
+    },
+    {
+      "author": "Roman Storm <rstormsf@gmail.com>"
+    }
+  ],
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/AigangNetwork/aigang-contracts/issues"
   },
   "homepage": "https://github.com/AigangNetwork/aigang-contracts#readme",
   "dependencies": {
-    "truffle": "^3.4.3"
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "babel-preset-stage-3": "^6.24.1",
+    "babel-register": "^6.26.0",
+    "chai": "^4.1.1",
+    "chai-as-promised": "^7.1.1",
+    "ethereumjs-abi": "^0.6.4",
+    "truffle": "^3.4.9"
+  },
+  "devDependencies": {
+    "coveralls": "^3.0.0",
+    "ethereumjs-testrpc": "^4.1.3",
+    "mochawesome": "^2.3.1",
+    "prettier": "^1.6.1",
+    "solidity-coverage": "^0.2.5"
   }
 }

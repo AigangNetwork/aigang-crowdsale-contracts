@@ -1,5 +1,6 @@
 pragma solidity ^0.4.11;
 
+import './ERC20.sol';
 import "./MiniMeToken.sol";
 
 contract PlaceHolder is Controlled, TokenController {
