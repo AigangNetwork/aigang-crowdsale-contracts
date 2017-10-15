@@ -13,12 +13,12 @@ function latestTime() {
 const BigNumber = web3.BigNumber;
 
 const duration = {
-  seconds: function(val) { return val},
+  seconds: function(val) { return val },
   minutes: function(val) { return val * this.seconds(60) },
   hours:   function(val) { return val * this.minutes(60) },
   days:    function(val) { return val * this.hours(24) },
   weeks:   function(val) { return val * this.days(7) },
-  years:   function(val) { return val * this.days(365)} 
+  years:   function(val) { return val * this.days(365) }
 };
 
 module.exports = function(deployer, chain, accounts) {
@@ -27,7 +27,7 @@ module.exports = function(deployer, chain, accounts) {
     const encodedParamsAIX = abiEncoder.rawEncode(['address'], [tokenFactory.address]);
     await deployer.deploy(AIX, tokenFactory.address);
     console.log('ENCODED PARAMS AIX: \n', encodedParamsAIX.toString('hex'));
-    
+
     const aix = await AIX.deployed();
     const encodedParamsContribution = abiEncoder.rawEncode(['address'], [aix.address]);
     await deployer.deploy(Contribution, aix.address);
@@ -38,19 +38,21 @@ module.exports = function(deployer, chain, accounts) {
     await deployMultisig(deployer, accounts);
     const multiSig = await MultiSigWallet.deployed();
 
-    const APT_TOKEN_ADDRESS = "0x23aE3C5B39B12f0693e05435EeaA1e51d8c61530"; 
+    const APT_TOKEN_ADDRESS = "0x23aE3C5B39B12f0693e05435EeaA1e51d8c61530";
     const encodedExchangerParams = abiEncoder.rawEncode(['address', 'address', 'address'], [APT_TOKEN_ADDRESS, aix.address, contribution.address]);
     await deployer.deploy(Exchanger, APT_TOKEN_ADDRESS, aix.address, contribution.address);
     console.log('EXCHANGER ENCODED: \n', encodedExchangerParams.toString('hex'));
     const exchanger = await Exchanger.deployed();
 
     const totalCap = new BigNumber(10**18 * 1000);
+    const collectorCap = totalCap.div(10);
     const startTime = latestTime() + duration.minutes(5);
     const endTime = latestTime() + duration.weeks(5);
 
     const _remainderHolder = '0x123';
     const _devHolder = '0x123431';
     const _communityHolder = '0x12343112322';
+    const _collector = '0x1234311234322';
     // address _apt,
     // address _exchanger,
     // address _contributionWallet,
@@ -60,12 +62,14 @@ module.exports = function(deployer, chain, accounts) {
     // uint256 _totalEthCap,
     // uint256 _startTime,
     // uint256 _endTime
-    await contribution.initialize(aix.address, 
+    await contribution.initialize(aix.address,
       exchanger.address,
-      multiSig.address, 
+      multiSig.address,
       _remainderHolder,
       _devHolder,
       _communityHolder,
+      _collector,
+      collectorCap,
       totalCap,
       startTime, endTime
     )

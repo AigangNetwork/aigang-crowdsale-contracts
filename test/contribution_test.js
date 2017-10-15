@@ -7,7 +7,7 @@ const assert = require("chai").assert;
 const BigNumber = web3.BigNumber;
 import { expectThrow, duration, latestBlock, getTime } from "./utils.js";
 
-contract("Contribution", ([miner, owner, investor]) => {
+contract("Contribution", ([miner, owner, investor, collector]) => {
   let aix;
   let contribution;
   let exchanger;
@@ -15,6 +15,7 @@ contract("Contribution", ([miner, owner, investor]) => {
   let tokensPreSold = new BigNumber(10 ** 18 * 50);
   let multiSig;
   let totalCap;
+  let collectorWeiCap;
   let sendingAmount;
   let currentTime;
   let _remainderHolder;
@@ -63,6 +64,7 @@ contract("Contribution", ([miner, owner, investor]) => {
 
       multiSig = owner;
       totalCap = new BigNumber(1000 * 10 ** 18); //1000 eth
+      collectorWeiCap = totalCap.div(10);
       sendingAmount = new BigNumber(10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
@@ -85,6 +87,8 @@ contract("Contribution", ([miner, owner, investor]) => {
         _remainderHolder,
         _devHolder,
         _communityHolder,
+        collector,
+        collectorWeiCap,
         totalCap,
         currentTime + 1,
         currentTime + 10
@@ -134,6 +138,8 @@ contract("Contribution", ([miner, owner, investor]) => {
         _remainderHolder,
         _devHolder,
         _communityHolder,
+        collector,
+        collectorWeiCap,
         totalCap,
         currentTime + 1,
         currentTime + 10
@@ -152,6 +158,8 @@ contract("Contribution", ([miner, owner, investor]) => {
           _remainderHolder,
           _devHolder,
           _communityHolder,
+          collector,
+          collectorWeiCap,
           totalCap,
           currentTime + 1,
           currentTime + 10
@@ -169,6 +177,8 @@ contract("Contribution", ([miner, owner, investor]) => {
           _remainderHolder,
           _devHolder,
           _communityHolder,
+          collector,
+          collectorWeiCap,
           totalCap,
           currentTime + 1,
           currentTime + 10
@@ -189,6 +199,8 @@ contract("Contribution", ([miner, owner, investor]) => {
           _remainderHolder,
           _devHolder,
           _communityHolder,
+          collector,
+          collectorWeiCap,
           totalCap,
           currentTime - 1,
           currentTime + 10
@@ -209,6 +221,8 @@ contract("Contribution", ([miner, owner, investor]) => {
           _remainderHolder,
           _devHolder,
           _communityHolder,
+          collector,
+          collectorWeiCap,
           0,
           currentTime + 1,
           currentTime + 10
@@ -229,6 +243,8 @@ contract("Contribution", ([miner, owner, investor]) => {
           _remainderHolder,
           _devHolder,
           _communityHolder,
+          collector,
+          collectorWeiCap,
           totalCap,
           currentTime + 11,
           currentTime + 1
@@ -270,6 +286,7 @@ contract("Contribution", ([miner, owner, investor]) => {
 
       multiSig = owner;
       totalCap = new BigNumber(60 * 10 ** 18); //59 eth
+      collectorWeiCap = totalCap.div(10);
       sendingAmount = new BigNumber(1 * 10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
@@ -288,6 +305,8 @@ contract("Contribution", ([miner, owner, investor]) => {
         _remainderHolder,
         _devHolder,
         _communityHolder,
+        collector,
+        collectorWeiCap,
         totalCap,
         currentTime + 1,
         currentTime + duration.weeks(1)
@@ -341,8 +360,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       );
 
       // invest 15% of total
-      // Should get 15% bonus on the first 10%
-      //        get 10% bonus on the last 5%
+      // Should get 15% bonus
       await contribution.sendTransaction({
         from: owner,
         value: toFund.toNumber() * 15 / 100
@@ -352,14 +370,13 @@ contract("Contribution", ([miner, owner, investor]) => {
       assert.equal(
         raised.toNumber(),
         toFund
-          .mul(5 * 2200 + 20 * 2300)
+          .mul(25 * 2300)
           .div(100)
           .toNumber()
       );
 
       // invest 15% of total
-      // Should get 10% bonus on the first 5%
-      //        get no bonus on the last 10%
+      // Should get 10% bonus
       await contribution.sendTransaction({
         from: owner,
         value: toFund.toNumber() * 15 / 100
@@ -369,7 +386,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       assert.equal(
         raised.toNumber(),
         toFund
-          .mul(10 * 2000 + 10 * 2200 + 20 * 2300)
+          .mul(15 * 2200 + 25 * 2300)
           .div(100)
           .toNumber()
       );
@@ -386,7 +403,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       assert.equal(
         raised.toNumber(),
         toFund
-          .mul(70 * 2000 + 10 * 2200 + 20 * 2300)
+          .mul(60 * 2000 + 15 * 2200 + 25 * 2300)
           .div(100)
           .toNumber()
       );
@@ -409,6 +426,7 @@ contract("Contribution", ([miner, owner, investor]) => {
 
       multiSig = addresses[0];
       totalCap = new BigNumber(1000 * 10 ** 18); //1000 eth
+      collectorWeiCap = totalCap.div(10);
       sendingAmount = new BigNumber(1 * 10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
@@ -427,6 +445,8 @@ contract("Contribution", ([miner, owner, investor]) => {
         _remainderHolder,
         _devHolder,
         _communityHolder,
+        collector,
+        collectorWeiCap,
         totalCap,
         currentTime + duration.seconds(2),
         currentTime + duration.weeks(1)
@@ -557,8 +577,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       await expectThrow(
         contribution.sendTransaction({
           from: owner,
-          value: totalCap,
-          
+          value: totalCap
         })
       );
     });
@@ -591,8 +610,7 @@ contract("Contribution", ([miner, owner, investor]) => {
 
       const txReceipt = await contribution.sendTransaction({
         from: owner,
-        value: totalCap.mul(1.8),
-        
+        value: totalCap.mul(1.8)
       });
       const totalWeiCap = await contribution.totalWeiCap();
       const totalWeiToCollect = await contribution.totalWeiToCollect();
@@ -613,7 +631,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       await web3.eth.sendTransaction({
         from: miner,
         to: owner,
-        
+
         value: totalCap
       });
       const tokenFactory = await MiniMeTokenFactory.new();
@@ -629,6 +647,7 @@ contract("Contribution", ([miner, owner, investor]) => {
 
       multiSig = owner;
       totalCap = new BigNumber(510 * 10 ** 18); //510 eth
+      collectorWeiCap = totalCap.div(10);
       sendingAmount = new BigNumber(10 ** 18); // 1 eth
       currentTime = getTime();
       _remainderHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF1";
@@ -647,6 +666,8 @@ contract("Contribution", ([miner, owner, investor]) => {
         _remainderHolder,
         _devHolder,
         _communityHolder,
+        collector,
+        collectorWeiCap,
         totalCap,
         currentTime + 1,
         currentTime + duration.weeks(1)
@@ -668,8 +689,7 @@ contract("Contribution", ([miner, owner, investor]) => {
 
       await contribution.sendTransaction({
         from: owner,
-        value: totalCap,
-        
+        value: totalCap
       });
       investorCap = await contribution.investorWeiToCollect(owner);
       assert.equal(investorCap.toString(10), 0);
@@ -681,8 +701,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       await contribution.setBlockTimestamp(currentTime + 2);
       await contribution.sendTransaction({
         from: owner,
-        value: sendingAmount,
-        
+        value: sendingAmount
       });
       totalLeftToCollect = await contribution.totalWeiToCollect();
       assert.equal(
@@ -692,8 +711,7 @@ contract("Contribution", ([miner, owner, investor]) => {
 
       await contribution.sendTransaction({
         from: owner,
-        value: totalCap,
-        
+        value: totalCap
       });
       totalLeftToCollect = await contribution.totalWeiToCollect();
       assert.equal(totalLeftToCollect.toString(10), 0);
@@ -716,7 +734,7 @@ contract("Contribution", ([miner, owner, investor]) => {
       await expectThrow(
         contribution.sendTransaction({
           from: owner,
-          value: sendingAmount,
+          value: sendingAmount
         })
       );
       const balanceOf = await aix.balanceOf(owner);
@@ -739,8 +757,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         await contribution.setBlockTimestamp(currentTime + 2);
         await contribution.sendTransaction({
           from: owner,
-          value: sendingAmount,
-          
+          value: sendingAmount
         });
 
         let minerBalance = await aix.balanceOf(miner);
@@ -792,8 +809,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         await contribution.setBlockTimestamp(currentTime + 2);
         await contribution.sendTransaction({
           from: owner,
-          value: totalCap.add(210000),
-          
+          value: totalCap.add(210000)
         });
 
         let totalWeiToCollect = await contribution.totalWeiToCollect();
@@ -812,8 +828,7 @@ contract("Contribution", ([miner, owner, investor]) => {
         let totalSupply = await aix.totalSupply();
         await contribution.sendTransaction({
           from: owner,
-          value: totalCap,
-          
+          value: totalCap
         });
 
         totalSupply = await aix.totalSupply();
