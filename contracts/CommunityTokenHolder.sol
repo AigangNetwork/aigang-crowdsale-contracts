@@ -4,14 +4,14 @@ import "./Contribution.sol";
 import "./SafeMath.sol";
 import "./ERC20.sol";
 
-contract DevTokensHolder is Controlled {
+contract CommunityTokenHolder is Controlled {
   using SafeMath for uint256;
 
   uint256 collectedTokens;
   Contribution contribution;
   ERC20 aix;
 
-  function DevTokensHolder(address _controller, address _contribution, address _aix) {
+  function CommunityTokenHolder(address _controller, address _contribution, address _aix) {
     controller = _controller;
     contribution = Contribution(_contribution);
     aix = ERC20(_aix);

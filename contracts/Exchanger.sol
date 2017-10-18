@@ -56,7 +56,7 @@ contract Exchanger is Controlled {
 
     uint256 pre_sale_fixed_at = contribution.initializedBlock();
 
-    // Get current AIX ballance at contributions initialization-
+    // Get current APT ballance at contributions initialization-
     uint256 balance = apt.balanceOfAt(msg.sender, pre_sale_fixed_at);
 
     // total of aix to be distributed.
