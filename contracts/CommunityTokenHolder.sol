@@ -7,9 +7,9 @@ import "./ERC20.sol";
 contract CommunityTokenHolder is Controlled {
   using SafeMath for uint256;
 
-  uint256 collectedTokens;
-  Contribution contribution;
-  ERC20 aix;
+  uint256 public collectedTokens;
+  Contribution private contribution;
+  ERC20 private aix;
 
   function CommunityTokenHolder(address _controller, address _contribution, address _aix) {
     controller = _controller;
@@ -22,7 +22,7 @@ contract CommunityTokenHolder is Controlled {
     uint256 balance = aix.balanceOf(address(this));
     uint256 total = collectedTokens.add(balance);
     // This wallet will get a 29% of the total tokens.
-    // since scaling 4 of 29 to a percentage looks horrible (13.7931034483),
+    // since scaling 4 of 29 to a percentage looks horrible (24.1379310344828),
     // I'll use a fraction.
     uint256 canExtract = total.mul(extractableFraction()).div(29);
 
@@ -48,8 +48,8 @@ contract CommunityTokenHolder is Controlled {
       // after a year the full 29% of the total Supply can be collected
       return 29;
     } else {
-      // before a year only a 5% of the total Supply can be collected
-      return 5;
+      // before a year only a 7% of the total Supply can be collected
+      return 7;
     }
   }
 

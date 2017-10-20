@@ -49,6 +49,9 @@ export const duration = {
   weeks: function(val) {
     return val * this.days(7);
   },
+  months: function(val) {
+    return val * this.days(30);
+  },
   years: function(val) {
     return val * this.days(365);
   }

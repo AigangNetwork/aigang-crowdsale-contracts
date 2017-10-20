@@ -7,9 +7,9 @@ import "./ERC20.sol";
 contract DevTokensHolder is Controlled {
   using SafeMath for uint256;
 
-  uint256 collectedTokens;
-  Contribution contribution;
-  ERC20 aix;
+  uint256 public collectedTokens;
+  Contribution private contribution;
+  ERC20 private aix;
 
   function DevTokensHolder(address _controller, address _contribution, address _aix) {
     controller = _controller;
@@ -35,7 +35,7 @@ contract DevTokensHolder is Controlled {
     TokensWithdrawn(controller, canExtract);
   }
 
-  function extractablePercentage() constant returns (uint256) {
+  function extractablePercentage() constant public returns (uint256) {
     uint256 finalizedTime = contribution.finalizedTime();
     require(finalizedTime > 0);
 
