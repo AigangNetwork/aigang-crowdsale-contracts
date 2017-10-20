@@ -22,7 +22,7 @@ contract CommunityTokenHolder is Controlled {
     uint256 balance = aix.balanceOf(address(this));
     uint256 total = collectedTokens.add(balance);
     // This wallet will get a 29% of the total tokens.
-    // since scaling 4 of 29 to a percentage looks horrible (24.1379310344828),
+    // since scaling 7 of 29 to a percentage looks horrible (24.1379310344828),
     // I'll use a fraction.
     uint256 canExtract = total.mul(extractableFraction()).div(29);
 
