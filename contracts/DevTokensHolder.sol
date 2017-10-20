@@ -8,8 +8,8 @@ contract DevTokensHolder is Controlled {
   using SafeMath for uint256;
 
   uint256 public collectedTokens;
-  Contribution private contribution;
-  ERC20 private aix;
+  Contribution public contribution;
+  ERC20 public aix;
 
   function DevTokensHolder(address _controller, address _contribution, address _aix) {
     controller = _controller;
