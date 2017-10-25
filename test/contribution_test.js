@@ -338,32 +338,35 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
       totalWei = await contribution.totalWeiToCollect();
     });
 
+
     it("calculates different bonuses based on percentage", async function() {
       await contribution.setBlockTimestamp(
         currentTime + duration.days(2) + duration.minutes(4)
       );
-      let toFund = await contribution.weiToCollect();
 
+      let toFund = await contribution.weiToCollect();   // 60 ETH  - first 12ETH with 15% bonus, 18 ETH with - 10% bonus and 30ETH without bonus
+      
       // invest 10% of total
       // Should get 15% bonus
       await contribution.sendTransaction({
         from: owner,
-        value: toFund.toNumber() * 10 / 100
+        value: toFund.toNumber() * 10 / 100    //6ETH
       });
-      let raised = await aix.balanceOf(owner);
+      let raised = await aix.balanceOf(owner);  //138000AIX
       assert.equal(
         raised.toNumber(),
         toFund
           .mul(10 * 2300)
           .div(100)
-          .toNumber()
+          .toNumber(), 
+        'raised is not equal with '
       );
 
       // invest 15% of total
       // Should get 15% bonus
       await contribution.sendTransaction({
         from: owner,
-        value: toFund.toNumber() * 15 / 100
+        value: toFund.toNumber() * 15 / 100 // 9 ETH
       });
 
       raised = await aix.balanceOf(owner);
@@ -372,40 +375,44 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
         toFund
           .mul(25 * 2300)
           .div(100)
-          .toNumber()
+          .toNumber(),
+          'raised is not equal after contribution'
       );
 
-      // invest 15% of total
+      // invest 30% of total
       // Should get 10% bonus
       await contribution.sendTransaction({
         from: owner,
-        value: toFund.toNumber() * 15 / 100
+        value: toFund.toNumber() * 30 / 100 //18ETH
       });
 
       raised = await aix.balanceOf(owner);
       assert.equal(
         raised.toNumber(),
         toFund
-          .mul(15 * 2200 + 25 * 2300)
+          .mul(30 * 2200 + 25 * 2300)
           .div(100)
-          .toNumber()
+          .toNumber(),
+          'raised is not equal after contribution more'
       );
 
-      // invest 70% of total
-      // Should get no bonus on the first 60%
-      //        get 10% returned
+      // invest 50% of total
+      // Should get  bonus of 45 %
+      //        get 6.66 % returned
+      // allready invester 34 eth
       await contribution.sendTransaction({
         from: owner,
-        value: toFund.toNumber() * 70 / 100
+        value: toFund.toNumber() * 50 / 100 // 30 ETH - 26 will be invested and 4 should return
       });
 
       raised = await aix.balanceOf(owner);
       assert.equal(
         raised.toNumber(),
         toFund
-          .mul(60 * 2000 + 15 * 2200 + 25 * 2300)
+          .mul(45 * 2000 + 30 * 2200 + 25 * 2300)
           .div(100)
-          .toNumber()
+          .toNumber(),
+          'raised is not equal after contribution last'
       );
     });
   });

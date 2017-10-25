@@ -181,7 +181,7 @@ contract Contribution is Controlled, TokenController {
       return 2300;
     }
 
-    if (collectedAfter24Hours <= thirtyPercentWithBonus) {
+    if (collectedAfter24Hours <= twentyPercentWithBonus + thirtyPercentWithBonus) {
       // 10% Bonus
       return 2200;
     }
