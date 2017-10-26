@@ -242,7 +242,7 @@ contract Contribution is Controlled, TokenController {
 
     require(msg.value >= minimumPerTransaction);
     uint256 toFund = msg.value;
-    uint256 toCollect = weiToCollect(_th);
+    uint256 toCollect = weiToCollectByInvestor(_th);
 
     if (toCollect > 0) {
       // Check total supply cap reached, sell the all remaining tokens
@@ -302,7 +302,7 @@ contract Contribution is Controlled, TokenController {
   }
 
   /// @return Total eth that still available for collection in weis.
-  function weiToCollect(address investor) public constant returns(uint256) {
+  function weiToCollectByInvestor(address investor) public constant returns(uint256) {
     uint256 cap;
     uint256 collected;
     // adding 1 day as a placeholder for X hours.

@@ -330,12 +330,12 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
 
       await contribution.whitelistAddresses([owner]);
 
-      let totalWei = await contribution.totalWeiToCollect();
+      let totalWei = await contribution.weiToCollect();
       await contribution.sendTransaction({
         from: owner,
         value: sendingAmount.mul(10)
       });
-      totalWei = await contribution.totalWeiToCollect();
+      totalWei = await contribution.weiToCollect();
     });
 
     it("calculates different bonuses based on percentage", async function() {
@@ -462,7 +462,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
         _remainderHolder,
         _devHolder
       ]);
-      let weiToCollect = await contribution.investorWeiToCollect(owner);
+      let weiToCollect = await contribution.weiToCollectByInvestor(owner);
       await contribution.sendTransaction({
         from: owner,
         value: sendingAmount.mul(4)
@@ -605,15 +605,17 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
       await contribution.setBlockTimestamp(currentTime + duration.days(2));
       await contribution.setBlockNumber(latestBlockNumber + 10);
       await contribution.whitelistAddresses([owner]);
-      let investorWeiToCollect = await contribution.investorWeiToCollect(owner);
-      assert.equal(investorWeiToCollect.toString(10), totalCap.toString(10));
+      let weiToCollectByInvestor = await contribution.weiToCollectByInvestor(
+        owner
+      );
+      assert.equal(weiToCollectByInvestor.toString(10), totalCap.toString(10));
 
       const txReceipt = await contribution.sendTransaction({
         from: owner,
         value: totalCap.mul(1.8)
       });
       const totalWeiCap = await contribution.totalWeiCap();
-      const totalWeiToCollect = await contribution.totalWeiToCollect();
+      const weiToCollect = await contribution.weiToCollect();
       const totalWeiCollected = await contribution.totalWeiCollected();
 
       ownerBalance = await web3.eth.getBalance(owner);
@@ -622,7 +624,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
         .sub(txReceipt.receipt.gasUsed)
         .toString(10);
       assert.equal(ownerBalance.toString(10), totalCapMinusExpenses);
-      assert.equal(totalWeiToCollect.toString(10), 0);
+      assert.equal(weiToCollect.toString(10), 0);
     });
   });
 
@@ -676,26 +678,26 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
     it("#weiToCollect(investor) within first day sets a cap for every investor", async function() {
       await contribution.setBlockTimestamp(currentTime + 2);
       await contribution.whitelistAddresses([miner]);
-      let investorCap = await contribution.investorWeiToCollect(owner);
+      let investorCap = await contribution.weiToCollectByInvestor(owner);
       assert.equal(investorCap.toString(10), totalCap.toString(10));
 
       await contribution.whitelistAddresses([owner]);
-      investorCap = await contribution.investorWeiToCollect(owner);
+      investorCap = await contribution.weiToCollectByInvestor(owner);
       assert.equal(investorCap.toString(10), totalCap.div(2).toString(10));
 
       await contribution.setBlockTimestamp(currentTime + duration.days(2));
-      investorCap = await contribution.investorWeiToCollect(owner);
+      investorCap = await contribution.weiToCollectByInvestor(owner);
       assert.equal(investorCap.toString(10), totalCap.toString(10));
 
       await contribution.sendTransaction({
         from: owner,
         value: totalCap
       });
-      investorCap = await contribution.investorWeiToCollect(owner);
+      investorCap = await contribution.weiToCollectByInvestor(owner);
       assert.equal(investorCap.toString(10), 0);
     });
     it("#weiToCollect() returns remaining cap", async function() {
-      let totalLeftToCollect = await contribution.totalWeiToCollect();
+      let totalLeftToCollect = await contribution.weiToCollect();
       assert.equal(totalLeftToCollect.toString(10), totalCap.toString(10));
       await contribution.whitelistAddresses([owner]);
       await contribution.setBlockTimestamp(currentTime + 2);
@@ -703,7 +705,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
         from: owner,
         value: sendingAmount
       });
-      totalLeftToCollect = await contribution.totalWeiToCollect();
+      totalLeftToCollect = await contribution.weiToCollect();
       assert.equal(
         totalLeftToCollect.toString(10),
         totalCap.sub(sendingAmount).toString(10)
@@ -713,7 +715,7 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
         from: owner,
         value: totalCap
       });
-      totalLeftToCollect = await contribution.totalWeiToCollect();
+      totalLeftToCollect = await contribution.weiToCollect();
       assert.equal(totalLeftToCollect.toString(10), 0);
     });
 
@@ -812,8 +814,8 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
           value: totalCap.add(210000)
         });
 
-        let totalWeiToCollect = await contribution.totalWeiToCollect();
-        assert.equal(totalWeiToCollect.toString(10), 0);
+        let weiToCollect = await contribution.weiToCollect();
+        assert.equal(weiToCollect.toString(10), 0);
         await contribution.finalize({ from: owner });
         finalizedTime = await contribution.finalizedTime();
         assert.equal(finalizedTime.toString(10), currentTime + 2);
