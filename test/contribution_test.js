@@ -268,6 +268,13 @@ contract("Contribution", ([miner, owner, investor, collector]) => {
       await contribution.blacklist(investor);
       assert.isFalse(await contribution.canPurchase(investor));
       assert.equal(await contribution.numWhitelistedInvestors(), 0);
+
+      investor = "0x0000000000000000000000000000000000ABCDEF";
+      await contribution.whitelist(investor);
+      assert.isTrue(await contribution.canPurchase("0x0000000000000000000000000000000000ABCDEF"));
+      assert.isTrue(await contribution.canPurchase("0x0000000000000000000000000000000000abcdef"));
+      assert.equal(await contribution.numWhitelistedInvestors(), 1);
+
     });
   });
   describe("#exchangeRate", async function() {

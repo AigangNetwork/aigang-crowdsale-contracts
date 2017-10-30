@@ -1,5 +1,13 @@
 pragma solidity ^0.4.15;
 
+/**
+ * @title Aigang Contribution contract
+ *
+ *  By contributing ETH to this smart contract you agree to the following terms and conditions:
+ *  https://github.com/AigangNetwork/aigang-crowdsale-contracts/Aigang-T&Cs(171020_clean).docx
+ *
+ */
+
 import "./SafeMath.sol";
 import "./ERC20.sol";
 import "./MiniMeToken.sol";
