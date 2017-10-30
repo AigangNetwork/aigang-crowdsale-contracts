@@ -6,9 +6,8 @@ contract MockContribution is Contribution {
     uint256 public blockNumber;
     uint256 public timeStamp;
 
-    function MockContribution(address _aix)
-        Contribution(_aix)
-    {
+    function MockContribution(address _aix) Contribution(_aix) {
+      timeStamp = now;
     }
 
 

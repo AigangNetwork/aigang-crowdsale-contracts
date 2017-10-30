@@ -13,6 +13,7 @@ contract Contribution is Controlled, TokenController {
   address public remainderHolder;
   address public devHolder;
   address public communityHolder;
+  address public exchanger;
 
   address public collector;
   uint256 public collectorWeiCap;
@@ -126,6 +127,7 @@ contract Contribution is Controlled, TokenController {
 
     // Exchangerate from apt to aix 2500 considering 25% bonus.
     require(aix.generateTokens(_exchanger, weiPreCollected.mul(2500)));
+    exchanger = _exchanger;
 
     Initialized(initializedBlock);
   }
@@ -218,11 +220,17 @@ contract Contribution is Controlled, TokenController {
     return true;
   }
 
-  function onTransfer(address, address, uint256) public returns (bool) {
+  function onTransfer(address _from, address, uint256) public returns (bool) {
+    if (_from == exchanger) {
+      return true;
+    }
     return transferable;
   }
 
-  function onApprove(address, address, uint256) public returns (bool) {
+  function onApprove(address _from, address, uint256) public returns (bool) {
+    if (_from == exchanger) {
+      return true;
+    }
     return transferable;
   }
 
