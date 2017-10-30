@@ -17,10 +17,10 @@ contract(
     let exchanger;
     let apt;
     let tokensPreSold = new BigNumber(50 * 10 ** 18);
+    let aixInExchanger = tokensPreSold.mul(2500);
     let multiSig = owner;
     let totalCap;
     let collectorWeiCap;
-    let sendingAmount;
     let currentTime;
     let remainderHolder;
     let _devHolder;
@@ -51,7 +51,6 @@ contract(
 
         totalCap = new BigNumber(5 * 10 ** 18); // 5 eth
         collectorWeiCap = totalCap.div(10);
-        sendingAmount = new BigNumber(10 ** 18); // 1 eth
         currentTime = getTime();
         _devHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF2";
         _communityHolder = "0x0039F22efB07A647557C7C5d17854CFD6D489eF3";
@@ -85,29 +84,29 @@ contract(
 
       it("collect()", async function() {
         const exchangerBalance = await aix.balanceOf(exchanger.address);
-        assert.equal(exchangerBalance.toNumber(), 50 * 2500 * 10 ** 18);
+        assert.equal(exchangerBalance.toNumber(), aixInExchanger.toNumber());
         let ownerBalance = await aix.balanceOf(owner);
         assert.equal(ownerBalance.toNumber(), 0);
         await exchanger.setBlockTimestamp(currentTime + 10);
         await exchanger.collect({ from: owner });
         ownerBalance = await aix.balanceOf(owner);
-        assert.equal(ownerBalance.toNumber(), 50 * 2500 * 10 ** 18);
+        assert.equal(ownerBalance.toNumber(), aixInExchanger.toNumber());
       });
 
       it("()", async function() {
         const exchangerBalance = await aix.balanceOf(exchanger.address);
-        assert.equal(exchangerBalance.toNumber(), 50 * 2500 * 10 ** 18);
+        assert.equal(exchangerBalance.toNumber(), aixInExchanger.toNumber());
         let ownerBalance = await aix.balanceOf(owner);
         assert.equal(ownerBalance.toNumber(), 0);
         await exchanger.setBlockTimestamp(currentTime + 10);
         await exchanger.sendTransaction({ from: owner });
         ownerBalance = await aix.balanceOf(owner);
-        assert.equal(ownerBalance.toNumber(), 50 * 2500 * 10 ** 18);
+        assert.equal(ownerBalance.toNumber(), aixInExchanger.toNumber());
       });
 
       it("with transferable false", async function() {
         const exchangerBalance = await aix.balanceOf(exchanger.address);
-        assert.equal(exchangerBalance.toNumber(), 50 * 2500 * 10 ** 18);
+        assert.equal(exchangerBalance.toNumber(), aixInExchanger.toNumber());
         let ownerBalance = await aix.balanceOf(owner);
         assert.equal(ownerBalance.toNumber(), 0);
         await contribution.allowTransfers(false);
@@ -116,12 +115,12 @@ contract(
         await exchanger.setBlockTimestamp(currentTime + 10);
         await exchanger.collect({ from: owner });
         ownerBalance = await aix.balanceOf(owner);
-        assert.equal(ownerBalance.toNumber(), 50 * 2500 * 10 ** 18);
+        assert.equal(ownerBalance.toNumber(), aixInExchanger.toNumber());
       });
 
       it("with transferable true", async function() {
         const exchangerBalance = await aix.balanceOf(exchanger.address);
-        assert.equal(exchangerBalance.toNumber(), 50 * 2500 * 10 ** 18);
+        assert.equal(exchangerBalance.toNumber(), aixInExchanger.toNumber());
         let ownerBalance = await aix.balanceOf(owner);
         assert.equal(ownerBalance.toNumber(), 0);
         await contribution.allowTransfers(true);
@@ -130,7 +129,7 @@ contract(
         await exchanger.setBlockTimestamp(currentTime + 10);
         await exchanger.collect({ from: owner });
         ownerBalance = await aix.balanceOf(owner);
-        assert.equal(ownerBalance.toNumber(), 50 * 2500 * 10 ** 18);
+        assert.equal(ownerBalance.toNumber(), aixInExchanger.toNumber());
       });
     });
   }
