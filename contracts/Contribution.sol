@@ -21,6 +21,7 @@ contract Contribution is Controlled, TokenController {
   address public remainderHolder;
   address public devHolder;
   address public communityHolder;
+  address public exchanger;
 
   address public collector;
   uint256 public collectorWeiCap;
@@ -134,6 +135,7 @@ contract Contribution is Controlled, TokenController {
 
     // Exchangerate from apt to aix 2500 considering 25% bonus.
     require(aix.generateTokens(_exchanger, weiPreCollected.mul(2500)));
+    exchanger = _exchanger;
 
     Initialized(initializedBlock);
   }
@@ -226,11 +228,17 @@ contract Contribution is Controlled, TokenController {
     return true;
   }
 
-  function onTransfer(address, address, uint256) public returns (bool) {
+  function onTransfer(address _from, address, uint256) public returns (bool) {
+    if (_from == exchanger) {
+      return true;
+    }
     return transferable;
   }
 
-  function onApprove(address, address, uint256) public returns (bool) {
+  function onApprove(address _from, address, uint256) public returns (bool) {
+    if (_from == exchanger) {
+      return true;
+    }
     return transferable;
   }
 
@@ -250,7 +258,7 @@ contract Contribution is Controlled, TokenController {
 
     require(msg.value >= minimumPerTransaction);
     uint256 toFund = msg.value;
-    uint256 toCollect = weiToCollect(_th);
+    uint256 toCollect = weiToCollectByInvestor(_th);
 
     if (toCollect > 0) {
       // Check total supply cap reached, sell the all remaining tokens
@@ -310,7 +318,7 @@ contract Contribution is Controlled, TokenController {
   }
 
   /// @return Total eth that still available for collection in weis.
-  function weiToCollect(address investor) public constant returns(uint256) {
+  function weiToCollectByInvestor(address investor) public constant returns(uint256) {
     uint256 cap;
     uint256 collected;
     // adding 1 day as a placeholder for X hours.
