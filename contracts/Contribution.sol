@@ -52,19 +52,19 @@ contract Contribution is Controlled, TokenController {
   bool public paused;
 
   modifier initialized() {
-    assert(initializedBlock != 0);
+    require(initializedBlock != 0);
     _;
   }
 
   modifier contributionOpen() {
     // collector can start depositing 2 days prior
     if (msg.sender == collector) {
-      assert(getBlockTimestamp().add(2 days) >= startTime);
+      require(getBlockTimestamp().add(2 days) >= startTime);
     } else {
-      assert(getBlockTimestamp() >= startTime);
+      require(getBlockTimestamp() >= startTime);
     }
-    assert(getBlockTimestamp() <= endTime);
-    assert(finalizedTime == 0);
+    require(getBlockTimestamp() <= endTime);
+    require(finalizedTime == 0);
     _;
   }
 
