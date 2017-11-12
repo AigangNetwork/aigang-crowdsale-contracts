@@ -9,3 +9,4 @@ solidity_flattener contracts/Contribution.sol --out flat/Contribution_flat.sol
 solidity_flattener contracts/DevTokensHolder.sol --out flat/DevTokensHolder_flat.sol
 solidity_flattener contracts/Exchanger.sol --out flat/Exchanger_flat.sol
 solidity_flattener contracts/RemainderTokenHolder.sol --out flat/RemainderTokenHolder_flat.sol
+solidity_flattener contracts/PlaceHolder.sol --out flat/PlaceHolder_flat.sol
