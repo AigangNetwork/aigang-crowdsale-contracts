@@ -84,7 +84,7 @@ contract("CommunityHolder", ([miner, owner, dev, community, remainder, collector
       await contribution.allowTransfers(true);
     });
 
-    it("Test comunity holder balanbe after finalizing", async function() {
+    it("Test community holder balance after finalizing", async function() {
        const communityHolderBalance = await aix.balanceOf(
         communityHolder.address
       );
@@ -103,7 +103,7 @@ contract("CommunityHolder", ([miner, owner, dev, community, remainder, collector
       );
     });
 
-    it("Community can access 7 % after finalizing and 29 % after a year of tokens", async function() {
+    it("Community can access 10 % after finalizing and 29 % after a year of tokens", async function() {
       let communityBalance = await aix.balanceOf(community);
       let totalCommunityHolderBalance = await aix.balanceOf(communityHolder.address);
 
@@ -118,12 +118,12 @@ contract("CommunityHolder", ([miner, owner, dev, community, remainder, collector
       communityBalance = await aix.balanceOf(community);
       let currentCommunityHolderBalance = await aix.balanceOf(communityHolder.address);
       
-      let expectedComunityBalance = (5 * 2000) * 10 ** 18 / 51 * 7; // 1.3725490196078432e+21
+      let expectedComunityBalance = (5 * 2000) * 10 ** 18 / 51 * 10; // 1.9607843137254903e+21
     
       assert.equal(
         communityBalance.toNumber(),
         expectedComunityBalance,
-         'community balance should be 7 %'
+         'community balance should be 10 %'
       );
 
       assert.equal(
@@ -133,7 +133,7 @@ contract("CommunityHolder", ([miner, owner, dev, community, remainder, collector
       );
       
 
-      // Second try should remaing the same 
+      // Second try should remain the same 
 
       await communityHolder.setBlockTimestamp( currentTime + duration.minutes(5));
       await communityHolder.collectTokens({ from: community });
