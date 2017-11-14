@@ -294,7 +294,9 @@ contract Contribution is Controlled, TokenController {
     require(msg.sender == controller || getBlockTimestamp() > endTime || weiToCollect() == 0);
 
     // remainder will be minted and locked for 1 year.
-    aix.generateTokens(remainderHolder, weiToCollect().mul(2000));
+    // This was decided to be removed.
+    // aix.generateTokens(remainderHolder, weiToCollect().mul(2000));
+
     // AIX generated so far is 51% of total
     uint256 tokenCap = aix.totalSupply().mul(100).div(51);
     // dev Wallet will have 20% of the total Tokens and will be able to retrieve quarterly.

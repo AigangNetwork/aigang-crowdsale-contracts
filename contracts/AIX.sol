@@ -5,9 +5,9 @@ import "./MiniMeToken.sol";
 
 
 /**
- * @title Aigang Pre-Launch Token
+ * @title Aigang Token
  *
- * @dev Simple ERC20 Token, with pre-sale logic
+ * @dev Simple ERC20 Token, with sale logic
  * @dev IMPORTANT NOTE: do not use or deploy this contract as-is. It needs some changes to be
  * production ready.
  */
@@ -20,7 +20,7 @@ contract AIX is MiniMeToken {
       _tokenFactory,
       0x0,                      // no parent token
       0,                        // no snapshot block number from parent
-      "Aigang Network Token",   // Token name
+      "Aigang",                 // Token name
       18,                       // Decimals
       "AIX",                    // Symbol
       true                      // Enable transfers
