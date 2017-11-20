@@ -16,7 +16,7 @@ contract("CommunityHolder", ([miner, owner, dev, community, remainder, collector
   let contribution;
   let exchanger;
   let apt;
-  let tokensPreSold = 0;
+  let tokensPreSold = new BigNumber(4 * 10 ** 18);
   let multiSig = owner;
   let totalCap;
   let collectorWeiCap;
@@ -36,6 +36,7 @@ contract("CommunityHolder", ([miner, owner, dev, community, remainder, collector
     beforeEach(async function() {
       aix = await AIX.new(tokenFactory.address);
       contribution = await MockContribution.new(aix.address);
+      
       exchanger = await Exchanger.new(
         apt.address,
         aix.address,
@@ -118,16 +119,16 @@ contract("CommunityHolder", ([miner, owner, dev, community, remainder, collector
       communityBalance = await aix.balanceOf(community);
       let currentCommunityHolderBalance = await aix.balanceOf(communityHolder.address);
       
-      let expectedComunityBalance = (5 * 2000) * 10 ** 18 / 51 * 10; // 1.9607843137254903e+21
+      let expectedCommunityBalance = (5 * 2000) * 10 ** 18 / 51 * 10; // 1.9607843137254903e+21
     
       assert.equal(
         communityBalance.toNumber(),
-        expectedComunityBalance,
+        expectedCommunityBalance,
          'community balance should be 10 %'
       );
 
       assert.equal(
-        ((totalCommunityHolderBalance.toNumber() - expectedComunityBalance) / 10 ** 18).toFixed(11),
+        ((totalCommunityHolderBalance.toNumber() - expectedCommunityBalance) / 10 ** 18).toFixed(11),
         (currentCommunityHolderBalance.toNumber() / 10 ** 18).toFixed(11),
          'community holder balance should decrease'
       );
@@ -143,12 +144,12 @@ contract("CommunityHolder", ([miner, owner, dev, community, remainder, collector
       
       assert.equal(
         communityBalance.toNumber(),
-        expectedComunityBalance,
+        expectedCommunityBalance,
          'community balance should be not changed'
       );
 
       assert.equal(
-        ((totalCommunityHolderBalance.toNumber() - expectedComunityBalance) / 10 ** 18).toFixed(11),
+        ((totalCommunityHolderBalance.toNumber() - expectedCommunityBalance) / 10 ** 18).toFixed(11),
         (currentCommunityHolderBalance.toNumber() / 10 ** 18).toFixed(11),
          'community holder balance should decrease'
       );
@@ -161,11 +162,11 @@ contract("CommunityHolder", ([miner, owner, dev, community, remainder, collector
       communityBalance = await aix.balanceOf(community);
       currentCommunityHolderBalance = await aix.balanceOf(communityHolder.address);  
 
-      expectedComunityBalance = (5 * 2000) / 51 * 29; 
+      expectedCommunityBalance = (5 * 2000) / 51 * 29; 
       
       assert.equal(
         (communityBalance.toNumber() / 10 ** 18).toFixed(11),
-        expectedComunityBalance.toFixed(11),
+        expectedCommunityBalance.toFixed(11),
           'community balance should be 29 %'
       );
 
@@ -185,7 +186,7 @@ contract("CommunityHolder", ([miner, owner, dev, community, remainder, collector
       
       assert.equal(
         (communityBalance.toNumber() / 10 ** 18).toFixed(11),
-        expectedComunityBalance.toFixed(11),
+        expectedCommunityBalance.toFixed(11),
           'community balance should remain the 29 %'
       );
 

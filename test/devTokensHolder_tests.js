@@ -16,7 +16,7 @@ contract("DevTokensHolder", ([miner, owner, dev, community, remainder, collector
   let contribution;
   let exchanger;
   let apt;
-  let tokensPreSold = 0;
+  let tokensPreSold = new BigNumber(4 * 10 ** 18);
   let multiSig = owner;
   let totalCap;
   let collectorWeiCap;
@@ -35,8 +35,8 @@ contract("DevTokensHolder", ([miner, owner, dev, community, remainder, collector
 
     beforeEach(async function() {
       aix = await AIX.new(tokenFactory.address);
-      apt = await APT.new(tokenFactory.address);
       contribution = await MockContribution.new(aix.address);
+
       exchanger = await Exchanger.new(
         apt.address,
         aix.address,
@@ -85,20 +85,21 @@ contract("DevTokensHolder", ([miner, owner, dev, community, remainder, collector
       await contribution.allowTransfers(true);
     });
 
-    it("Test dev holder balanbe after finalizing", async function() {
+    it("Test dev holder balance after finalizing", async function() {
       const devHolderBalance = await aix.balanceOf(devHolder.address);
       const devBalance = await aix.balanceOf(dev);
       const totalSupplyAfterContribution = await aix.totalSupply();
 
       assert.equal(
-        (devHolderBalance.toNumber() / 10 ** 18).toFixed(11), //.toFixed(11) take only last 11 digits because 12 digit is different of rounding problems
-        ((5 * 2000) / 51 * 20).toFixed(11), 
-        'devHolder is not equal'
-      );
-      assert.equal(
         totalSupplyAfterContribution.toNumber() / 10 ** 18,
         (5 * 2000)  / 51 * 100,
         'totalSupplyAfterContribution is not equal'
+      );
+
+      assert.equal(
+        (devHolderBalance.toNumber() / 10 ** 18).toFixed(11), //.toFixed(11) take only last 11 digits because 12 digit is different of rounding problems
+        ((5 * 2000) / 51 * 20).toFixed(11), 
+        'devHolder is not equal'
       );
 
       assert.equal(
